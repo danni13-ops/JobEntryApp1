@@ -1,6 +1,7 @@
 @page
 @model JobEntryApp.Pages.TaskDashboardModel
 @{
+    ViewData["Title"] = "Production Dashboard";
     var viewMode = Request.Query["ViewMode"].ToString();
     if (string.IsNullOrEmpty(viewMode)) { viewMode = "list"; }
 
@@ -19,7 +20,105 @@
     .task-card { border-radius:8px; border:1px solid #e9ecef; padding:12px; }
     .task-badges .badge { margin-right:6px; }
     .pagination { margin-top:12px; }
+    .section-header { font-weight:700; font-size:1rem; border-bottom:2px solid; padding-bottom:.4rem; margin-bottom:.75rem; }
+    .section-header.dp { border-color:#0d6efd; color:#0d6efd; }
+    .section-header.prod { border-color:#198754; color:#198754; }
+    .section-header.mail { border-color:#ffc107; color:#b45309; }
+    .job-summary-card { border-radius:8px; border:1px solid #e9ecef; padding:10px 12px; background:#fff; }
+    .job-summary-card:hover { background:#f8f9fa; }
 </style>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="section-header dp"><i class="bi bi-cpu me-1"></i>Data Processing (@Model.DataProcessingJobs.Count)</div>
+        @if (!Model.DataProcessingJobs.Any())
+        {
+            <p class="text-muted small">No jobs in data processing.</p>
+        }
+        @foreach (var job in Model.DataProcessingJobs)
+        {
+            <div class="job-summary-card mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber" class="fw-semibold text-decoration-none">Job @job.JobNumber</a>
+                        <div class="small">@job.JobName</div>
+                        <div class="small text-muted">DP: @(job.DataProcessing ?? "–")</div>
+                    </div>
+                    <div class="text-end">
+                        @if (job.MailDate.HasValue)
+                        {
+                            <div class="small text-muted">Mail: @job.MailDate.Value.ToString("MM/dd")</div>
+                        }
+                        @if (job.PendingTaskCount > 0)
+                        {
+                            <span class="badge bg-warning text-dark">@job.PendingTaskCount tasks</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="section-header prod"><i class="bi bi-check2-circle me-1"></i>Ready for Production (@Model.ReadyForProductionJobs.Count)</div>
+        @if (!Model.ReadyForProductionJobs.Any())
+        {
+            <p class="text-muted small">No jobs ready for production.</p>
+        }
+        @foreach (var job in Model.ReadyForProductionJobs)
+        {
+            <div class="job-summary-card mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber" class="fw-semibold text-decoration-none">Job @job.JobNumber</a>
+                        <div class="small">@job.JobName</div>
+                        <div class="small text-muted">@job.Customer</div>
+                    </div>
+                    <div class="text-end">
+                        @if (job.MailDate.HasValue)
+                        {
+                            <div class="small text-muted">Mail: @job.MailDate.Value.ToString("MM/dd")</div>
+                        }
+                        @if (job.PendingTaskCount > 0)
+                        {
+                            <span class="badge bg-secondary">@job.PendingTaskCount tasks</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="section-header mail"><i class="bi bi-envelope-arrow-up me-1"></i>Mailing Soon (@Model.MailingSoonJobs.Count)</div>
+        @if (!Model.MailingSoonJobs.Any())
+        {
+            <p class="text-muted small">No jobs mailing within 7 days.</p>
+        }
+        @foreach (var job in Model.MailingSoonJobs)
+        {
+            <div class="job-summary-card mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber" class="fw-semibold text-decoration-none">Job @job.JobNumber</a>
+                        <div class="small">@job.JobName</div>
+                        <div class="small text-muted">@job.Customer</div>
+                    </div>
+                    <div class="text-end">
+                        @if (job.MailDate.HasValue)
+                        {
+                            <div class="small fw-bold text-warning">Mail: @job.MailDate.Value.ToString("MM/dd")</div>
+                        }
+                        @if (job.PendingTaskCount > 0)
+                        {
+                            <span class="badge bg-danger">@job.PendingTaskCount tasks</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 <div class="card mb-4">
     <div class="card-header bg-light">

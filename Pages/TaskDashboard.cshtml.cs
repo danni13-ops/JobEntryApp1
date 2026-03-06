@@ -1,3 +1,4 @@
+using JobEntryApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -14,6 +15,10 @@ namespace JobEntryApp.Pages
             _config = config;
             _logger = logger;
         }
+
+        public List<JobSummary> DataProcessingJobs { get; set; } = new();
+        public List<JobSummary> ReadyForProductionJobs { get; set; } = new();
+        public List<JobSummary> MailingSoonJobs { get; set; } = new();
 
         public List<TaskDashboardItem> Tasks { get; set; } = new();
         public List<string> Assignees { get; set; } = new();
@@ -67,6 +72,7 @@ namespace JobEntryApp.Pages
             LoadCsrCounts();
             LoadDpCounts();
             LoadTasks();
+            LoadSectionSummaries();
         }
 
         private void LoadAssignees()
@@ -344,6 +350,103 @@ namespace JobEntryApp.Pages
                 });
             }
         }
+
+        private void LoadSectionSummaries()
+        {
+            var cs = _config.GetConnectionString("JobEntryDb")
+                ?? throw new InvalidOperationException("Missing connection string.");
+
+            using var conn = new SqlConnection(cs);
+            conn.Open();
+
+            // Data Processing section: active jobs where DataProcessing is not null
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT j.JobNumber, j.JobName, j.Customer, j.Csr, j.DataProcessing,
+                           j.Status, j.StartDate, j.MailDate,
+                           ISNULL(pt.PendingTasks, 0) AS PendingTasks
+                    FROM dbo.Jobs j
+                    LEFT JOIN (
+                        SELECT JobNumber, COUNT(*) AS PendingTasks
+                        FROM dbo.Tasks
+                        WHERE Status != 'Completed'
+                        GROUP BY JobNumber
+                    ) pt ON pt.JobNumber = j.JobNumber
+                    WHERE j.DataProcessing IS NOT NULL
+                      AND j.Status NOT IN ('Completed','Mailed')
+                    ORDER BY j.MailDate ASC;";
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    DataProcessingJobs.Add(ReadJobSummary(reader));
+            }
+
+            // Ready for Production section: active jobs without open data-processing tasks
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT j.JobNumber, j.JobName, j.Customer, j.Csr, j.DataProcessing,
+                           j.Status, j.StartDate, j.MailDate,
+                           ISNULL(pt.PendingTasks, 0) AS PendingTasks
+                    FROM dbo.Jobs j
+                    LEFT JOIN (
+                        SELECT JobNumber, COUNT(*) AS PendingTasks
+                        FROM dbo.Tasks
+                        WHERE Status != 'Completed'
+                        GROUP BY JobNumber
+                    ) pt ON pt.JobNumber = j.JobNumber
+                    WHERE j.Status NOT IN ('Completed','Mailed')
+                      AND NOT EXISTS (
+                          SELECT 1 FROM dbo.Tasks t
+                          WHERE t.JobNumber = j.JobNumber
+                            AND t.Stage = 'Data Processing'
+                            AND t.Status != 'Completed'
+                      )
+                    ORDER BY j.MailDate ASC;";
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    ReadyForProductionJobs.Add(ReadJobSummary(reader));
+            }
+
+            // Mailing Soon section: active jobs with mail date within 7 days
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+                cmd.Parameters.AddWithValue("@Soon", DateTime.Today.AddDays(7));
+                cmd.CommandText = @"
+                    SELECT j.JobNumber, j.JobName, j.Customer, j.Csr, j.DataProcessing,
+                           j.Status, j.StartDate, j.MailDate,
+                           ISNULL(pt.PendingTasks, 0) AS PendingTasks
+                    FROM dbo.Jobs j
+                    LEFT JOIN (
+                        SELECT JobNumber, COUNT(*) AS PendingTasks
+                        FROM dbo.Tasks
+                        WHERE Status != 'Completed'
+                        GROUP BY JobNumber
+                    ) pt ON pt.JobNumber = j.JobNumber
+                    WHERE j.Status NOT IN ('Completed','Mailed')
+                      AND j.MailDate IS NOT NULL
+                      AND j.MailDate >= @Today
+                      AND j.MailDate <= @Soon
+                    ORDER BY j.MailDate ASC;";
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    MailingSoonJobs.Add(ReadJobSummary(reader));
+            }
+        }
+
+        private static JobSummary ReadJobSummary(SqlDataReader reader) => new JobSummary
+        {
+            JobNumber      = reader.GetInt32(0),
+            JobName        = reader.IsDBNull(1) ? "" : reader.GetString(1),
+            Customer       = reader.IsDBNull(2) ? "" : reader.GetString(2),
+            Csr            = reader.IsDBNull(3) ? null : reader.GetString(3),
+            DataProcessing = reader.IsDBNull(4) ? null : reader.GetString(4),
+            Status         = reader.IsDBNull(5) ? "" : reader.GetString(5),
+            StartDate      = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+            MailDate       = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+            PendingTaskCount = reader.GetInt32(8)
+        };
 
         public IActionResult OnPostCompleteTask(int taskId)
         {
