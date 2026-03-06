@@ -50,6 +50,12 @@ namespace JobEntryApp.Pages
         public int PageSize { get; set; } = 20;
         public int TotalCount { get; set; }
 
+        public List<TaskDashboardItem> UpcomingTasks =>
+            Tasks.Where(t => t.DueDate >= DateTime.Today)
+                 .OrderBy(t => t.DueDate)
+                 .Take(20)
+                 .ToList();
+
         [TempData]
         public string? StatusMessage { get; set; }
 
