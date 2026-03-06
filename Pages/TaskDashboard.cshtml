@@ -1,5 +1,19 @@
 @page
 @model JobEntryApp.Pages.TaskDashboardModel
+@{
+    var viewMode = Request.Query["ViewMode"].ToString();
+    if (string.IsNullOrEmpty(viewMode)) { viewMode = "list"; }
+
+    // Build a base query string that preserves existing filters for view mode switches
+    var filterParams = new System.Text.StringBuilder();
+    if (!string.IsNullOrEmpty(Model.FilterAssignee)) filterParams.Append($"&FilterAssignee={Uri.EscapeDataString(Model.FilterAssignee)}");
+    if (!string.IsNullOrEmpty(Model.FilterDp)) filterParams.Append($"&FilterDp={Uri.EscapeDataString(Model.FilterDp)}");
+    if (!string.IsNullOrEmpty(Model.FilterStage)) filterParams.Append($"&FilterStage={Uri.EscapeDataString(Model.FilterStage)}");
+    if (!string.IsNullOrEmpty(Model.FilterTaskSearch)) filterParams.Append($"&FilterTaskSearch={Uri.EscapeDataString(Model.FilterTaskSearch)}");
+    if (!string.IsNullOrEmpty(Model.FilterStatus)) filterParams.Append($"&FilterStatus={Uri.EscapeDataString(Model.FilterStatus)}");
+    if (Model.ExcludeMailedJobs) filterParams.Append("&ExcludeMailedJobs=true");
+    var filters = filterParams.ToString();
+}
 
 <style>
     .task-card { border-radius:8px; border:1px solid #e9ecef; padding:12px; }
@@ -17,7 +31,15 @@
             <div class="alert alert-info">@Model.StatusMessage</div>
         }
 
+        <div class="btn-group mb-3" role="group">
+            <a href="?ViewMode=list@(filters)" class="btn btn-sm @(viewMode == "list" ? "btn-primary" : "btn-outline-primary")">&#9776; List</a>
+            <a href="?ViewMode=jobs@(filters)" class="btn btn-sm @(viewMode == "jobs" ? "btn-primary" : "btn-outline-primary")">&#128194; Jobs</a>
+            <a href="?ViewMode=upcoming@(filters)" class="btn btn-sm @(viewMode == "upcoming" ? "btn-primary" : "btn-outline-primary")">&#128197; Upcoming</a>
+            <a href="?ViewMode=calendar@(filters)" class="btn btn-sm @(viewMode == "calendar" ? "btn-primary" : "btn-outline-primary")">&#128197; Calendar</a>
+        </div>
+
         <form method="get" class="row g-3">
+            <input type="hidden" name="ViewMode" value="@viewMode" />
             <div class="col-12">
                 <input name="FilterTaskSearch" value="@Model.FilterTaskSearch" class="form-control" placeholder="Search tasks or jobs..." />
             </div>
@@ -84,9 +106,72 @@
         </div>
 
         <div class="mt-3">
-            @if (!Model.Tasks.Any())
+            @if (!Model.Tasks.Any() && viewMode != "upcoming" && viewMode != "calendar")
             {
                 <p class="text-muted">No tasks found.</p>
+            }
+            else if (viewMode == "jobs")
+            {
+                foreach (var jobGroup in Model.Tasks.GroupBy(t => t.JobNumber))
+                {
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <strong>Job @jobGroup.Key</strong>
+                            — @jobGroup.First().JobName
+                        </div>
+                        <div class="card-body">
+                            @foreach (var t in jobGroup)
+                            {
+                                <div class="border-bottom pb-2 mb-2">
+                                    <strong>@t.TaskName</strong>
+                                    <span class="badge bg-light text-dark">@t.Stage</span>
+                                    <span class="small text-muted ms-2">Due: @t.GetDueDateDisplay()</span>
+                                    <span class="badge bg-secondary">@t.Status</span>
+                                    @if (t.IsOverdue)
+                                    {
+                                        <span class="badge bg-danger">Overdue</span>
+                                    }
+                                    else if (t.IsDueToday)
+                                    {
+                                        <span class="badge bg-warning text-dark">Today</span>
+                                    }
+                                    else if (t.IsDueSoon)
+                                    {
+                                        <span class="badge bg-info text-dark">Soon</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else if (viewMode == "upcoming")
+            {
+                <h5>Upcoming Tasks</h5>
+                @foreach (var t in Model.UpcomingTasks)
+                {
+                    <div class="task-card mb-2">
+                        <strong>@t.TaskName</strong>
+                        @if (t.IsOverdue)
+                        {
+                            <span class="badge bg-danger">Overdue</span>
+                        }
+                        else if (t.IsDueToday)
+                        {
+                            <span class="badge bg-warning text-dark">Today</span>
+                        }
+                        else if (t.IsDueSoon)
+                        {
+                            <span class="badge bg-info text-dark">Soon</span>
+                        }
+                        <div class="small">@t.JobName</div>
+                        <div class="small text-muted">Due: @t.GetDueDateDisplay()</div>
+                    </div>
+                }
+            }
+            else if (viewMode == "calendar")
+            {
+                <partial name="/Pages/Jobs/_MiniCalendar.cshtml" />
             }
             else
             {
@@ -105,6 +190,20 @@
                                             <span class="small text-muted ms-2">@t.JobName</span>
                                         </div>
                                         <div class="small text-muted">Due: @t.GetDueDateDisplay()</div>
+                                        <div class="task-badges mt-1">
+                                            @if (t.IsOverdue)
+                                            {
+                                                <span class="badge bg-danger">Overdue</span>
+                                            }
+                                            else if (t.IsDueToday)
+                                            {
+                                                <span class="badge bg-warning text-dark">Today</span>
+                                            }
+                                            else if (t.IsDueSoon)
+                                            {
+                                                <span class="badge bg-info text-dark">Soon</span>
+                                            }
+                                        </div>
                                     </div>
                                     <div class="text-end">
                                         <div class="mb-2">@t.Status</div>
