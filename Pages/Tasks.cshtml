@@ -1,0 +1,180 @@
+@page
+@model JobEntryApp.Pages.TasksModel
+@{
+    ViewData["Title"] = $"Tasks for Job {Model.JobNumber}";
+}
+
+<div class="container mt-4">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3>Job #@Model.JobNumber - @Model.JobName</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Start Date:</strong> @(Model.StartDate?.ToString("MM/dd/yyyy") ?? "Not set")
+                </div>
+                <div class="col-md-3">
+                    <strong>Mail Date:</strong> @(Model.MailDate?.ToString("MM/dd/yyyy") ?? "Not set")
+                </div>
+                <div class="col-md-3">
+                    <strong>Status:</strong> <span class="badge bg-info">@Model.JobStatus</span>
+                </div>
+                <div class="col-md-3">
+                    <a asp-page="/Jobs/Details" asp-route-jobNumber="@Model.JobNumber" class="btn btn-sm btn-secondary">
+                        View Job Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Model.StatusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Tasks.Any())
+    {
+        <div class="alert alert-warning">
+            No tasks were found for this job.
+            <a asp-page="/TaskTemplates" class="alert-link">Open Tasks Template</a>
+            to verify templates, then create or update this job to generate tasks.
+        </div>
+    }
+    else
+    {
+        @foreach (var stage in Model.Tasks.GroupBy(t => t.Stage ?? "Other").OrderBy(g => g.Key))
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>@stage.Key</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 90px;">Done</th>
+                                <th>Task Name</th>
+                                <th style="width: 150px;">Assigned To</th>
+                                <th style="width: 120px;">Due Date</th>
+                                <th style="width: 100px;">Status</th>
+                                <th style="width: 80px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in stage.OrderBy(t => t.TaskNumber))
+                            {
+                                var rowClass = task.IsCompleted ? "table-success" : (task.IsOverdue ? "table-danger" : "");
+                                <tr class="@rowClass">
+                                    <td>@task.TaskNumber</td>
+                                    <td class="text-center">
+                                        @if (task.IsCompleted)
+                                        {
+                                            <form method="post" asp-page-handler="UncompleteTask" style="display:inline;">
+                                                <input type="hidden" name="taskId" value="@task.TaskId" />
+                                                <input type="hidden" name="jobNumber" value="@Model.JobNumber" />
+                                                <button type="submit" class="btn btn-sm btn-success" title="Mark as incomplete">Undo</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form method="post" asp-page-handler="CompleteTask" style="display:inline;">
+                                                <input type="hidden" name="taskId" value="@task.TaskId" />
+                                                <input type="hidden" name="jobNumber" value="@Model.JobNumber" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as complete">Done</button>
+                                            </form>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong>@task.TaskName</strong>
+                                        @if (!string.IsNullOrWhiteSpace(task.Dependencies))
+                                        {
+                                            <br />
+                                            <small class="text-muted">Depends on: @task.Dependencies</small>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(task.Notes))
+                                        {
+                                            <br />
+                                            <small class="text-info">Notes: @task.Notes</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @task.AssignedTo
+                                        @if (!string.IsNullOrWhiteSpace(task.Assignee2))
+                                        {
+                                            <br />
+                                            <small class="text-muted">+ @task.Assignee2</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (task.DueDate.HasValue)
+                                        {
+                                            @task.DueDate.Value.ToString("MM/dd/yyyy")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (task.IsCompleted)
+                                        {
+                                            <span class="badge bg-success">Completed</span>
+                                        }
+                                        else if (task.IsOverdue)
+                                        {
+                                            <span class="badge bg-danger">Overdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@task.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#notesModal@(task.TaskId)">
+                                            Notes
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+
+    @foreach (var task in Model.Tasks)
+    {
+        <div class="modal fade" id="notesModal@(task.TaskId)" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" asp-page-handler="UpdateNotes">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Task #@task.TaskNumber Notes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="taskId" value="@task.TaskId" />
+                            <input type="hidden" name="jobNumber" value="@Model.JobNumber" />
+                            <textarea name="notes" class="form-control" rows="5">@task.Notes</textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Notes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mt-3">
+        <a asp-page="/Index" class="btn btn-secondary">Back to Home</a>
+    </div>
+</div>

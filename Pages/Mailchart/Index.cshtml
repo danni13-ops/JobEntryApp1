@@ -1,0 +1,469 @@
+@page
+@model JobEntryApp.Pages.Mailchart.IndexModel
+@{
+    ViewData["Title"] = "Mail Chart";
+}
+
+<style>
+    .mailchart-table th {
+        white-space: nowrap;
+        font-size: .875rem;
+    }
+
+    .mailchart-table td {
+        vertical-align: middle;
+        font-size: .92rem;
+    }
+
+    .section-title {
+        border-radius: .4rem;
+    }
+
+    .section-chip {
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+    .mailchart-table th.action-col,
+    .mailchart-table td.action-col {
+        min-width: 120px;
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        background: #fff;
+    }
+
+    .mailchart-table thead th.action-col {
+        z-index: 3;
+        background: #f8f9fa;
+    }
+
+    .column-filter-row th {
+        background: #f8fafc;
+        border-top: 0;
+        padding: .35rem .5rem;
+    }
+
+    .column-filter-input {
+        min-width: 90px;
+        font-size: .8rem;
+    }
+
+    .sortable-column {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 1.2rem !important;
+    }
+
+    .sortable-column::after {
+        content: '↕';
+        position: absolute;
+        right: .4rem;
+        color: #94a3b8;
+        font-size: .75rem;
+    }
+
+    .sortable-column.sort-asc::after {
+        content: '↑';
+        color: #0f172a;
+    }
+
+    .sortable-column.sort-desc::after {
+        content: '↓';
+        color: #0f172a;
+    }
+</style>
+
+<h1>Mail Chart</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success">@Model.StatusMessage</div>
+}
+
+<form method="get" class="mb-3 d-flex gap-2">
+    <input asp-for="Search" class="form-control" placeholder="Search job name, customer, job #, kit..." style="max-width:400px" />
+    <select asp-for="CsrFilter" class="form-select" style="max-width:220px">
+        <option value="All">All CSRs</option>
+        @foreach (var csr in Model.TodayJobs.Concat(Model.OtherJobs).Select(j => j.AE).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().OrderBy(c => c))
+        {
+            <option value="@csr" selected="@(Model.CsrFilter == csr)">@csr</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a asp-page="/Mailchart/Index" class="btn btn-outline-secondary">Clear</a>
+</form>
+
+<div class="alert alert-info">
+    <strong>@Model.Today.ToString("dddd, MMMM d, yyyy")</strong>
+</div>
+
+@if (Model.TodayJobs.Any())
+{
+    <h3 class="mt-4 mb-3 bg-primary text-white p-2 d-flex justify-content-between align-items-center section-title">
+        <span>Mailing Today (@Model.Today.ToString("dddd, MMMM d"))</span>
+        <span class="badge bg-light text-primary section-chip">@Model.TodayJobs.Count job rows</span>
+    </h3>
+    <div class="table-responsive shadow-sm rounded" style="overflow-x: auto;">
+        <table class="table table-bordered table-hover table-sm mailchart-table js-mailchart-table mb-0" style="background-color: white; border: 1px solid #dee2e6;">
+            <thead class="table-light">
+                <tr class="table-warning">
+                    <th>Job #</th>
+                    <th>Kit</th>
+                    <th>Customer</th>
+                    <th>Job Name</th>
+                    <th>Class</th>
+                    <th>CSR (AE)</th>
+                    <th>Mail Date</th>
+                    <th class="text-end">Quantity</th>
+                    <th>Style/Truck</th>
+                    <th>Commingler</th>
+                    <th class="text-end action-col" data-sortable="false" data-filterable="false">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.TodayJobs)
+            {
+                <tr>
+                    <td>@item.JobNumber</td>
+                    <td>@(item.Kit == 0 ? "" : item.Kit.ToString())</td>
+                    <td>@item.Customer</td>
+                    <td>@item.JobName</td>
+                    <td>@item.Class</td>
+                    <td>@item.AE</td>
+                    <td>@item.MailDate?.ToString("MM/dd/yyyy")</td>
+                    <td class="text-end">@item.Quantity.ToString("N0")</td>
+                    <td>@item.StyleTruck</td>
+                    <td>@item.Commingler</td>
+                    <td class="text-end action-col">
+                        <button type="button"
+                                class="btn btn-sm btn-primary edit-row-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editRowModal"
+                                data-mailchartid="@item.MailChartId"
+                                data-kit="@(item.Kit == 0 ? "" : item.Kit.ToString())"
+                                data-customer="@item.Customer"
+                                data-jobname="@item.JobName"
+                                data-class="@item.Class"
+                                data-ae="@item.AE"
+                                data-maildate="@item.MailDate?.ToString("yyyy-MM-dd")"
+                                data-quantity="@item.Quantity"
+                                data-styletruck="@item.StyleTruck"
+                                data-commingler="@item.Commingler">
+                            Edit Row
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.OtherJobs.Any())
+{
+    <h3 class="mt-4 mb-3 bg-secondary text-white p-2 d-flex justify-content-between align-items-center section-title">
+        <span>Not Mailed Yet (Future / Unscheduled)</span>
+        <span class="badge bg-light text-secondary section-chip">@Model.OtherJobs.Count job rows</span>
+    </h3>
+    <div class="table-responsive shadow-sm rounded" style="overflow-x: auto;">
+        <table class="table table-bordered table-hover table-sm mailchart-table js-mailchart-table mb-0" style="background-color: white; border: 1px solid #dee2e6;">
+            <thead class="table-light">
+                <tr>
+                    <th>Job #</th>
+                    <th>Kit</th>
+                    <th>Customer</th>
+                    <th>Job Name</th>
+                    <th>Class</th>
+                    <th>CSR (AE)</th>
+                    <th>Mail Date</th>
+                    <th class="text-end">Quantity</th>
+                    <th>Style/Truck</th>
+                    <th>Commingler</th>
+                    <th class="text-end action-col" data-sortable="false" data-filterable="false">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.OtherJobs)
+            {
+                <tr>
+                    <td>@item.JobNumber</td>
+                    <td>@(item.Kit == 0 ? "" : item.Kit.ToString())</td>
+                    <td>@item.Customer</td>
+                    <td>@item.JobName</td>
+                    <td>@item.Class</td>
+                    <td>@item.AE</td>
+                    <td>@item.MailDate?.ToString("MM/dd/yyyy")</td>
+                    <td class="text-end">@item.Quantity.ToString("N0")</td>
+                    <td>@item.StyleTruck</td>
+                    <td>@item.Commingler</td>
+                    <td class="text-end action-col">
+                        <button type="button"
+                                class="btn btn-sm btn-primary edit-row-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editRowModal"
+                                data-mailchartid="@item.MailChartId"
+                                data-kit="@(item.Kit == 0 ? "" : item.Kit.ToString())"
+                                data-customer="@item.Customer"
+                                data-jobname="@item.JobName"
+                                data-class="@item.Class"
+                                data-ae="@item.AE"
+                                data-maildate="@item.MailDate?.ToString("yyyy-MM-dd")"
+                                data-quantity="@item.Quantity"
+                                data-styletruck="@item.StyleTruck"
+                                data-commingler="@item.Commingler">
+                            Edit Row
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (!Model.TodayJobs.Any() && !Model.OtherJobs.Any())
+{
+    <div class="alert alert-warning">
+        No mail chart entries for today or future dates.
+    </div>
+}
+
+<div class="modal fade" id="editRowModal" tabindex="-1" aria-labelledby="editRowModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditRow">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRowModalLabel">Edit Mail Chart Row</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="EditInput.MailChartId" id="edit-mailchartid" />
+                    <input type="hidden" name="EditInput.Search" value="@Model.Search" />
+                    <input type="hidden" name="EditInput.CsrFilter" value="@Model.CsrFilter" />
+
+                    <div class="mb-2">
+                        <label class="form-label">Kit</label>
+                        <input name="EditInput.Kit" id="edit-kit" type="number" min="0" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Customer</label>
+                        <input name="EditInput.Customer" id="edit-customer" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Job Name</label>
+                        <input name="EditInput.JobName" id="edit-jobname" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Class</label>
+                        <input name="EditInput.Class" id="edit-class" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">CSR (AE)</label>
+                        <input name="EditInput.AE" id="edit-ae" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Mail Date</label>
+                        <input name="EditInput.MailDate" id="edit-maildate" type="date" min="@Model.Today.ToString("yyyy-MM-dd")" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Quantity</label>
+                        <input name="EditInput.Quantity" id="edit-quantity" type="number" min="0" class="form-control" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Style/Truck</label>
+                        <input name="EditInput.StyleTruck" id="edit-styletruck" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Commingler</label>
+                        <input name="EditInput.Commingler" id="edit-commingler" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-edit-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            function initializeFilterSortTable(table) {
+                if (!table || !table.tHead || !table.tBodies.length) return;
+
+                const headerRow = table.tHead.rows[0];
+                const tbody = table.tBodies[0];
+                const sortState = { index: null, direction: 'asc' };
+                const filters = new Map();
+
+                const filterRow = document.createElement('tr');
+                filterRow.className = 'column-filter-row';
+
+                Array.from(headerRow.cells).forEach((th, index) => {
+                    const filterCell = document.createElement('th');
+                    const filterable = th.dataset.filterable !== 'false';
+                    const sortable = th.dataset.sortable !== 'false';
+
+                    if (sortable) {
+                        th.classList.add('sortable-column');
+                        th.tabIndex = 0;
+                        th.setAttribute('role', 'button');
+                    }
+
+                    if (filterable) {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'form-control form-control-sm column-filter-input';
+                        input.placeholder = 'Filter';
+                        input.setAttribute('aria-label', `Filter ${th.textContent.trim()}`);
+                        input.addEventListener('input', () => {
+                            const value = input.value.trim().toLowerCase();
+                            if (value) {
+                                filters.set(index, value);
+                            } else {
+                                filters.delete(index);
+                            }
+                            applyFiltersAndSorting();
+                        });
+                        filterCell.appendChild(input);
+                    }
+
+                    filterRow.appendChild(filterCell);
+                });
+
+                table.tHead.appendChild(filterRow);
+
+                function getCellText(row, index) {
+                    const cell = row.cells[index];
+                    return cell ? cell.textContent.trim() : '';
+                }
+
+                function parseSortValue(rawValue) {
+                    const value = rawValue.trim();
+                    if (!value) return { type: 'text', value: '' };
+
+                    const dateMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                    if (dateMatch) {
+                        const month = parseInt(dateMatch[1], 10) - 1;
+                        const day = parseInt(dateMatch[2], 10);
+                        const year = parseInt(dateMatch[3], 10);
+                        return { type: 'number', value: new Date(year, month, day).getTime() };
+                    }
+
+                    const numericCandidate = value.replace(/,/g, '');
+                    if (/^-?\d+(\.\d+)?$/.test(numericCandidate)) {
+                        return { type: 'number', value: Number(numericCandidate) };
+                    }
+
+                    return { type: 'text', value: value.toLowerCase() };
+                }
+
+                function applyFiltersAndSorting() {
+                    const rows = Array.from(tbody.rows);
+
+                    rows.forEach((row) => {
+                        const isMatch = Array.from(filters.entries()).every(([index, term]) => {
+                            const cellValue = getCellText(row, index).toLowerCase();
+                            return cellValue.includes(term);
+                        });
+                        row.style.display = isMatch ? '' : 'none';
+                    });
+
+                    if (sortState.index === null) return;
+
+                    const visibleRows = rows.filter((row) => row.style.display !== 'none');
+                    visibleRows.sort((a, b) => {
+                        const aValue = parseSortValue(getCellText(a, sortState.index));
+                        const bValue = parseSortValue(getCellText(b, sortState.index));
+
+                        let comparison;
+                        if (aValue.type === 'number' && bValue.type === 'number') {
+                            comparison = aValue.value - bValue.value;
+                        } else {
+                            comparison = String(aValue.value).localeCompare(String(bValue.value));
+                        }
+
+                        return sortState.direction === 'asc' ? comparison : -comparison;
+                    });
+
+                    visibleRows.forEach((row) => tbody.appendChild(row));
+                }
+
+                Array.from(headerRow.cells).forEach((th, index) => {
+                    if (th.dataset.sortable === 'false') return;
+
+                    const sortHandler = () => {
+                        const isSameColumn = sortState.index === index;
+                        sortState.index = index;
+                        sortState.direction = isSameColumn && sortState.direction === 'asc' ? 'desc' : 'asc';
+
+                        Array.from(headerRow.cells).forEach((cell) => cell.classList.remove('sort-asc', 'sort-desc'));
+                        th.classList.add(sortState.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                        applyFiltersAndSorting();
+                    };
+
+                    th.addEventListener('click', sortHandler);
+                    th.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            sortHandler();
+                        }
+                    });
+                });
+            }
+
+            const form = document.querySelector('#editRowModal form');
+            const saveBtn = document.getElementById('save-edit-btn');
+            const dateInput = document.getElementById('edit-maildate');
+            const todayIso = '@Model.Today.ToString("yyyy-MM-dd")';
+
+            document.querySelectorAll('.js-mailchart-table').forEach(initializeFilterSortTable);
+
+            document.addEventListener('click', (event) => {
+                const btn = event.target.closest('.edit-row-btn');
+                if (!btn) return;
+
+                document.getElementById('edit-mailchartid').value = btn.dataset.mailchartid || '';
+                document.getElementById('edit-kit').value = btn.dataset.kit || '';
+                document.getElementById('edit-customer').value = btn.dataset.customer || '';
+                document.getElementById('edit-jobname').value = btn.dataset.jobname || '';
+                document.getElementById('edit-class').value = btn.dataset.class || '';
+                document.getElementById('edit-ae').value = btn.dataset.ae || '';
+                document.getElementById('edit-maildate').value = btn.dataset.maildate || '';
+                document.getElementById('edit-quantity').value = btn.dataset.quantity || '0';
+                document.getElementById('edit-styletruck').value = btn.dataset.styletruck || '';
+                document.getElementById('edit-commingler').value = btn.dataset.commingler || '';
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Changes';
+                }
+            });
+
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    const kitInput = document.getElementById('edit-kit');
+                    if (kitInput && !kitInput.value) {
+                        kitInput.value = '0';
+                    }
+
+                    const selectedDate = dateInput && dateInput.value ? dateInput.value : '';
+                    if (selectedDate && selectedDate < todayIso) {
+                        e.preventDefault();
+                        alert('Mail Date cannot be before today.');
+                        return;
+                    }
+
+                    if (saveBtn) {
+                        saveBtn.disabled = true;
+                        saveBtn.textContent = 'Saving...';
+                    }
+                });
+            }
+        })();
+    </script>
+}

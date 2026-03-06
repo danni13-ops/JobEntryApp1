@@ -1,0 +1,3 @@
+bin/
+obj/
+secrets/google-drive-service-account.json

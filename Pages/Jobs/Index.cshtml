@@ -1,0 +1,256 @@
+@page
+@model JobEntryApp.Pages.Jobs.IndexModel
+@{
+    ViewData["Title"] = "All Jobs";
+}
+
+<style>
+    .column-filter-row th {
+        background: #f8fafc;
+        padding: .35rem .5rem;
+        border-top: 0;
+    }
+
+    .column-filter-input {
+        min-width: 90px;
+        font-size: .8rem;
+    }
+
+    .sortable-column {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 1.2rem !important;
+    }
+
+    .sortable-column::after {
+        content: '↕';
+        position: absolute;
+        right: .4rem;
+        color: #94a3b8;
+        font-size: .75rem;
+    }
+
+    .sortable-column.sort-asc::after {
+        content: '↑';
+        color: #0f172a;
+    }
+
+    .sortable-column.sort-desc::after {
+        content: '↓';
+        color: #0f172a;
+    }
+</style>
+
+<h1>All Jobs</h1>
+
+<form method="get" class="mb-3 d-flex gap-2">
+    <input asp-for="Search" class="form-control" placeholder="Search jobs..." />
+    <select asp-for="StatusFilter" class="form-select" style="max-width:200px">
+        <option value="All">All Statuses</option>
+        <option>New</option>
+        <option>Scheduled</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a asp-page="/Jobs/Index" asp-route-ExportCsv="true" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" class="btn btn-outline-secondary ms-2">Export CSV</a>
+    <a asp-page="/NewJob" class="btn btn-success ms-auto">Create New Job</a>
+</form>
+
+<form method="post" asp-page-handler="Delete" id="jobsForm">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <button id="deleteSelectedBtn" type="submit" class="btn btn-danger" style="display:none;" onclick="return confirm('Delete selected jobs? This will remove related tasks and mailchart rows.');">Delete Selected</button>
+        </div>
+        <div class="text-muted small">Use top filters for DB-level filtering, then column filters for quick local filtering and sorting</div>
+    </div>
+
+    <table id="jobBookTable" class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:36px" data-sortable="false" data-filterable="false"><input type="checkbox" id="selectAll" /></th>
+                <th>Job #</th>
+                <th>Job Name</th>
+                <th>Status</th>
+                <th>Mail Date</th>
+                <th>CSR</th>
+                <th>Data Processing</th>
+                <th class="text-end">Quantity</th>
+                <th>Postage Style</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var job in Model.Jobs)
+        {
+            <tr style="cursor:default">
+                <td><input type="checkbox" name="SelectedJobs" value="@job.JobNumber" class="rowCheckbox" /></td>
+                <td><a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber">@job.JobNumber</a></td>
+                <td>@job.JobName</td>
+                <td>@job.Status</td>
+                <td>@job.MailDate?.ToString("MM/dd/yyyy")</td>
+                <td>@job.Csr</td>
+                <td>@job.DataProcessing</td>
+                <td class="text-end">@job.Quantity.ToString("N0")</td>
+                <td>@job.PostageStyle</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</form>
+
+@section Scripts {
+    <script>
+        (function(){
+            function initializeFilterSortTable(table) {
+                if (!table || !table.tHead || !table.tBodies.length) return;
+
+                const headerRow = table.tHead.rows[0];
+                const tbody = table.tBodies[0];
+                const sortState = { index: null, direction: 'asc' };
+                const filters = new Map();
+
+                const filterRow = document.createElement('tr');
+                filterRow.className = 'column-filter-row';
+
+                Array.from(headerRow.cells).forEach((th, index) => {
+                    const filterCell = document.createElement('th');
+                    const filterable = th.dataset.filterable !== 'false';
+                    const sortable = th.dataset.sortable !== 'false';
+
+                    if (sortable) {
+                        th.classList.add('sortable-column');
+                        th.tabIndex = 0;
+                        th.setAttribute('role', 'button');
+                    }
+
+                    if (filterable) {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'form-control form-control-sm column-filter-input';
+                        input.placeholder = 'Filter';
+                        input.setAttribute('aria-label', `Filter ${th.textContent.trim()}`);
+                        input.addEventListener('input', () => {
+                            const value = input.value.trim().toLowerCase();
+                            if (value) {
+                                filters.set(index, value);
+                            } else {
+                                filters.delete(index);
+                            }
+                            applyFiltersAndSorting();
+                        });
+                        filterCell.appendChild(input);
+                    }
+
+                    filterRow.appendChild(filterCell);
+                });
+
+                table.tHead.appendChild(filterRow);
+
+                function getCellText(row, index) {
+                    const cell = row.cells[index];
+                    return cell ? cell.textContent.trim() : '';
+                }
+
+                function parseSortValue(rawValue) {
+                    const value = rawValue.trim();
+                    if (!value) return { type: 'text', value: '' };
+
+                    const dateMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                    if (dateMatch) {
+                        const month = parseInt(dateMatch[1], 10) - 1;
+                        const day = parseInt(dateMatch[2], 10);
+                        const year = parseInt(dateMatch[3], 10);
+                        return { type: 'number', value: new Date(year, month, day).getTime() };
+                    }
+
+                    const numericCandidate = value.replace(/,/g, '');
+                    if (/^-?\d+(\.\d+)?$/.test(numericCandidate)) {
+                        return { type: 'number', value: Number(numericCandidate) };
+                    }
+
+                    return { type: 'text', value: value.toLowerCase() };
+                }
+
+                function applyFiltersAndSorting() {
+                    const rows = Array.from(tbody.rows);
+
+                    rows.forEach((row) => {
+                        const isMatch = Array.from(filters.entries()).every(([index, term]) => {
+                            const cellValue = getCellText(row, index).toLowerCase();
+                            return cellValue.includes(term);
+                        });
+                        row.style.display = isMatch ? '' : 'none';
+                    });
+
+                    if (sortState.index === null) return;
+
+                    const visibleRows = rows.filter((row) => row.style.display !== 'none');
+                    visibleRows.sort((a, b) => {
+                        const aValue = parseSortValue(getCellText(a, sortState.index));
+                        const bValue = parseSortValue(getCellText(b, sortState.index));
+
+                        let comparison;
+                        if (aValue.type === 'number' && bValue.type === 'number') {
+                            comparison = aValue.value - bValue.value;
+                        } else {
+                            comparison = String(aValue.value).localeCompare(String(bValue.value));
+                        }
+
+                        return sortState.direction === 'asc' ? comparison : -comparison;
+                    });
+
+                    visibleRows.forEach((row) => tbody.appendChild(row));
+                }
+
+                Array.from(headerRow.cells).forEach((th, index) => {
+                    if (th.dataset.sortable === 'false') return;
+
+                    const sortHandler = () => {
+                        const isSameColumn = sortState.index === index;
+                        sortState.index = index;
+                        sortState.direction = isSameColumn && sortState.direction === 'asc' ? 'desc' : 'asc';
+
+                        Array.from(headerRow.cells).forEach((cell) => cell.classList.remove('sort-asc', 'sort-desc'));
+                        th.classList.add(sortState.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                        applyFiltersAndSorting();
+                    };
+
+                    th.addEventListener('click', sortHandler);
+                    th.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            sortHandler();
+                        }
+                    });
+                });
+            }
+
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.rowCheckbox');
+            const deleteBtn = document.getElementById('deleteSelectedBtn');
+
+            function updateDeleteButton() {
+                const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                deleteBtn.style.display = anyChecked ? 'inline-block' : 'none';
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                    updateDeleteButton();
+                });
+            }
+
+            checkboxes.forEach(cb => cb.addEventListener('change', function() {
+                if (!cb.checked) selectAll.checked = false;
+                else if (Array.from(checkboxes).every(c => c.checked)) selectAll.checked = true;
+                updateDeleteButton();
+            }));
+
+            initializeFilterSortTable(document.getElementById('jobBookTable'));
+            updateDeleteButton();
+        })();
+    </script>
+}

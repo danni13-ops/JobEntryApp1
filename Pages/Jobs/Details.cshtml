@@ -1,0 +1,127 @@
+@page "{jobNumber:int}"
+@model JobEntryApp.Pages.Jobs.DetailsModel
+@{
+    ViewData["Title"] = $"Job #{Model.Job?.JobNumber}";
+}
+
+<a asp-page="/Jobs/Index">&larr; Back to Jobs</a>
+
+@if (Model.Job is null)
+{
+    <p>Job not found.</p>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center my-3">
+        <div>
+            <h2>Job #@Model.Job.JobNumber - @Model.Job.JobName</h2>
+            <div>
+                @Model.Job.Customer
+                @if (!string.IsNullOrEmpty(Model.Job.SubAccount))
+                {
+                    @(" - " + Model.Job.SubAccount)
+                }
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary">@Model.Job.Status</span>
+            <a asp-page="/Tasks" asp-route-jobNumber="@Model.Job.JobNumber" class="btn btn-primary">
+                View Tasks
+            </a>
+        </div>
+
+    <!-- Mini Calendar for this job -->
+    @await Html.PartialAsync("/Pages/Jobs/_MiniCalendar.cshtml")
+    </div>
+
+    <div class="row">
+        <!-- Job Information card -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Job Information</span>
+                    <span class="text-muted small">Read only for now</span>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-4">Mail Date</dt>
+                        <dd class="col-8">@Model.Job.MailDate?.ToString("MMM dd, yyyy")</dd>
+
+                        <dt class="col-4">Start Date</dt>
+                        <dd class="col-8">@Model.Job.StartDate?.ToString("MMM dd, yyyy")</dd>
+
+                        <dt class="col-4">Quantity</dt>
+                        <dd class="col-8">@Model.Job.Quantity?.ToString("N0")</dd>
+
+                        <dt class="col-4">Postage Style</dt>
+                        <dd class="col-8">@Model.Job.PostageStyle</dd>
+
+                        <dt class="col-4">Postage Class</dt>
+                        <dd class="col-8">@Model.Job.PostageClass</dd>
+
+                        <dt class="col-4">CSR</dt>
+                        <dd class="col-8">@Model.Job.Csr</dd>
+
+                        <dt class="col-4">Sales</dt>
+                        <dd class="col-8">@Model.Job.Sales</dd>
+
+                        <dt class="col-4">Data Processing</dt>
+                        <dd class="col-8">@Model.Job.DataProcessing</dd>
+
+                        <dt class="col-4">Print</dt>
+                        <dd class="col-8">
+                            @if (Model.Job.Print)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </dd>
+
+                        <dt class="col-4">Two Way Match</dt>
+                        <dd class="col-8">
+                            @if (Model.Job.TwoWayMatch)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Folders placeholder -->
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">Job Folders</div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        File upload sections (Art, Control Cards, Postal, Reports, Signoffs, etc.) will go here.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks placeholder -->
+    <div class="card mb-3">
+        <div class="card-header">Tasks</div>
+        <div class="card-body">
+            <p class="text-muted">Task list with stages, assignees, and statuses will go here.</p>
+        </div>
+    </div>
+
+    <!-- Comments & Notes placeholder -->
+    <div class="card mb-3">
+        <div class="card-header">Comments &amp; Notes</div>
+        <div class="card-body">
+            <p class="text-muted">Comments and notes for this job will go here.</p>
+        </div>
+    </div>
+}
