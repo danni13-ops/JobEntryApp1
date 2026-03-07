@@ -39,13 +39,19 @@
                     <li class="nav-item mb-2">
                         <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/NewJob" ? "active bg-white bg-opacity-10 rounded" : "")"
                            asp-page="/NewJob">
-                            <i class="bi bi-plus-circle me-2"></i> Job Entry Form
+                            <i class="bi bi-plus-circle me-2"></i> New Job
                         </a>
                     </li>
                     <li class="nav-item mb-2">
                         <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Jobs") == true ? "active bg-white bg-opacity-10 rounded" : "")"
                            asp-page="/Jobs/Index">
-                            <i class="bi bi-briefcase me-2"></i> Jobs
+                            <i class="bi bi-folder2-open me-2"></i> Job Book
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Jobs/Search" ? "active bg-white bg-opacity-10 rounded" : "")"
+                           asp-page="/Jobs/Search">
+                            <i class="bi bi-search me-2"></i> Job Information
                         </a>
                     </li>
                     <li class="nav-item mb-2">
@@ -55,15 +61,15 @@
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskTemplates" ? "active bg-white bg-opacity-10 rounded" : "")"
-                           asp-page="/TaskTemplates">
-                            <i class="bi bi-list-task me-2"></i> Tasks Template
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskDashboard" ? "active bg-white bg-opacity-10 rounded" : "")"
+                           asp-page="/TaskDashboard">
+                            <i class="bi bi-kanban me-2"></i> Production Dashboard
                         </a>
                     </li>
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskDashboard" ? "active bg-white bg-opacity-10 rounded" : "")"
-                           asp-page="/TaskDashboard">
-                            <i class="bi bi-kanban me-2"></i> Production
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskTemplates" ? "active bg-white bg-opacity-10 rounded" : "")"
+                           asp-page="/TaskTemplates">
+                            <i class="bi bi-list-task me-2"></i> Task Templates
                         </a>
                     </li>
                     <li class="nav-item mb-2">

@@ -145,30 +145,25 @@
 </style>
 
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Job Management System</h1>
-            <div class="text-muted">Select a module to get started</div>
-        </div>
-        <div>
-            <a asp-page="/NewJob" class="btn btn-primary">New Job Entry</a>
-        </div>
+    <div class="mb-4">
+        <h1 class="h3 mb-0">Job Management System</h1>
+        <div class="text-muted">Select a module to get started</div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="row g-4">
+        <div class="col-sm-6 col-md-4">
             <a asp-page="/NewJob" class="card module-card h-100 text-decoration-none text-dark tone-emerald" tabindex="0">
                 <div class="d-flex align-items-center w-100">
                     <i class="bi bi-plus-circle icon"></i>
                     <div>
-                        <div class="title">New Job Entry Form</div>
+                        <div class="title">New Job</div>
                         <div class="subtitle">Create a new job with all details</div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="col-sm-6 col-md-4">
             <a asp-page="/Jobs/Index" class="card module-card h-100 text-decoration-none text-dark tone-ocean" tabindex="0">
                 <div class="d-flex align-items-center w-100">
                     <i class="bi bi-folder2-open icon"></i>
@@ -180,55 +175,31 @@
             </a>
         </div>
 
-        <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="col-sm-6 col-md-4">
+            <a asp-page="/Jobs/Search" class="card module-card h-100 text-decoration-none text-dark tone-violet" tabindex="0">
+                <div class="d-flex align-items-center w-100">
+                    <i class="bi bi-search icon"></i>
+                    <div>
+                        <div class="title">Job Information</div>
+                        <div class="subtitle">Search and jump directly to a job</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-sm-6 col-md-4">
             <a asp-page="/Mailchart/Index" class="card module-card h-100 text-decoration-none text-dark tone-gold" tabindex="0">
                 <div class="d-flex align-items-center w-100">
                     <i class="bi bi-envelope-paper icon"></i>
                     <div>
-                        <div class="title">MailChart</div>
+                        <div class="title">Mail Chart</div>
                         <div class="subtitle">Manage mail plan rows by job and kit</div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <div class="col-sm-6 col-md-4 col-lg-3">
-            <a asp-page="/TaskTemplates" class="card module-card h-100 text-decoration-none text-dark tone-violet" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-list-check icon"></i>
-                    <div>
-                        <div class="title">Tasks Template</div>
-                        <div class="subtitle">Manage default task templates</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4 col-lg-3">
-            <div class="card module-card module-card-disabled h-100 text-dark tone-cyan" aria-disabled="true">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-calculator icon"></i>
-                    <div>
-                        <div class="title">Counts</div>
-                        <div class="subtitle">Coming soon</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-md-4 col-lg-3">
-            <div class="card module-card module-card-disabled h-100 text-dark tone-slate" aria-disabled="true">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-box-seam icon"></i>
-                    <div>
-                        <div class="title">Receiving</div>
-                        <div class="subtitle">Table coming soon</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="col-sm-6 col-md-4">
             <a asp-page="/TaskDashboard" class="card module-card h-100 text-decoration-none text-dark tone-coral" tabindex="0">
                 <div class="d-flex align-items-center w-100">
                     <i class="bi bi-gear-wide-connected icon"></i>
@@ -240,12 +211,12 @@
             </a>
         </div>
 
-        <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="col-sm-6 col-md-4">
             <div class="card module-card module-card-disabled h-100 text-dark tone-indigo" aria-disabled="true">
                 <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-calendar2-week icon"></i>
+                    <i class="bi bi-bar-chart-line icon"></i>
                     <div>
-                        <div class="title">Schedule</div>
+                        <div class="title">Reports</div>
                         <div class="subtitle">Coming soon</div>
                     </div>
                 </div>
