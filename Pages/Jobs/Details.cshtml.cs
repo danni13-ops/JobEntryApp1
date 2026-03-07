@@ -30,12 +30,17 @@ namespace JobEntryApp.Pages.Jobs
             cmd.CommandText = @"
                 SELECT JobNumber, JobName, MailDate, Customer, SubAccount, Csr, DataProcessing,
                        Quantity, PostageStyle, PostageClass, Sales, StartDate, Status,
-                       [Print], TwoWayMatch,
-                       MatchWayCount, MatchComponent1, MatchComponent2, MatchComponent3, MatchComponent4, MatchComponent5,
-                       PrintPieceCount, PrintComponent1Name, PrintComponent1FacingDirection,
+                       [Print], TwoWayMatch, RushJob,
+                       MatchWayCount,
+                       MatchComponent1, MatchComponent2, MatchComponent3, MatchComponent4, MatchComponent5,
+                       MatchComponent1FacingDirection, MatchComponent2FacingDirection,
+                       MatchComponent3FacingDirection, MatchComponent4FacingDirection, MatchComponent5FacingDirection,
+                       PrintPieceCount,
+                       PrintComponent1Name, PrintComponent1FacingDirection,
                        PrintComponent2Name, PrintComponent2FacingDirection,
                        PrintComponent3Name, PrintComponent3FacingDirection,
-                       PrintComponent4Name, PrintComponent4FacingDirection
+                       PrintComponent4Name, PrintComponent4FacingDirection,
+                       PrintComponent5Name, PrintComponent5FacingDirection
                 FROM dbo.Jobs
                 WHERE JobNumber = @jobNumber;";
             cmd.Parameters.AddWithValue("@jobNumber", JobNumber);
@@ -64,21 +69,29 @@ namespace JobEntryApp.Pages.Jobs
                 Status = reader.IsDBNull(12) ? string.Empty : reader.GetString(12),
                 Print = !reader.IsDBNull(13) && reader.GetBoolean(13),
                 TwoWayMatch = !reader.IsDBNull(14) && reader.GetBoolean(14),
-                MatchWayCount = reader.IsDBNull(15) ? (int?)null : reader.GetInt32(15),
-                MatchComponent1 = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
-                MatchComponent2 = reader.IsDBNull(17) ? string.Empty : reader.GetString(17),
-                MatchComponent3 = reader.IsDBNull(18) ? string.Empty : reader.GetString(18),
-                MatchComponent4 = reader.IsDBNull(19) ? string.Empty : reader.GetString(19),
-                MatchComponent5 = reader.IsDBNull(20) ? string.Empty : reader.GetString(20),
-                PrintPieceCount = reader.IsDBNull(21) ? (int?)null : reader.GetInt32(21),
-                PrintComponent1Name = reader.IsDBNull(22) ? string.Empty : reader.GetString(22),
-                PrintComponent1FacingDirection = reader.IsDBNull(23) ? string.Empty : reader.GetString(23),
-                PrintComponent2Name = reader.IsDBNull(24) ? string.Empty : reader.GetString(24),
-                PrintComponent2FacingDirection = reader.IsDBNull(25) ? string.Empty : reader.GetString(25),
-                PrintComponent3Name = reader.IsDBNull(26) ? string.Empty : reader.GetString(26),
-                PrintComponent3FacingDirection = reader.IsDBNull(27) ? string.Empty : reader.GetString(27),
-                PrintComponent4Name = reader.IsDBNull(28) ? string.Empty : reader.GetString(28),
-                PrintComponent4FacingDirection = reader.IsDBNull(29) ? string.Empty : reader.GetString(29)
+                RushJob = !reader.IsDBNull(15) && reader.GetBoolean(15),
+                MatchWayCount = reader.IsDBNull(16) ? (int?)null : reader.GetInt32(16),
+                MatchComponent1 = reader.IsDBNull(17) ? string.Empty : reader.GetString(17),
+                MatchComponent2 = reader.IsDBNull(18) ? string.Empty : reader.GetString(18),
+                MatchComponent3 = reader.IsDBNull(19) ? string.Empty : reader.GetString(19),
+                MatchComponent4 = reader.IsDBNull(20) ? string.Empty : reader.GetString(20),
+                MatchComponent5 = reader.IsDBNull(21) ? string.Empty : reader.GetString(21),
+                MatchComponent1FacingDirection = reader.IsDBNull(22) ? null : reader.GetString(22),
+                MatchComponent2FacingDirection = reader.IsDBNull(23) ? null : reader.GetString(23),
+                MatchComponent3FacingDirection = reader.IsDBNull(24) ? null : reader.GetString(24),
+                MatchComponent4FacingDirection = reader.IsDBNull(25) ? null : reader.GetString(25),
+                MatchComponent5FacingDirection = reader.IsDBNull(26) ? null : reader.GetString(26),
+                PrintPieceCount = reader.IsDBNull(27) ? (int?)null : reader.GetInt32(27),
+                PrintComponent1Name = reader.IsDBNull(28) ? string.Empty : reader.GetString(28),
+                PrintComponent1FacingDirection = reader.IsDBNull(29) ? string.Empty : reader.GetString(29),
+                PrintComponent2Name = reader.IsDBNull(30) ? string.Empty : reader.GetString(30),
+                PrintComponent2FacingDirection = reader.IsDBNull(31) ? string.Empty : reader.GetString(31),
+                PrintComponent3Name = reader.IsDBNull(32) ? string.Empty : reader.GetString(32),
+                PrintComponent3FacingDirection = reader.IsDBNull(33) ? string.Empty : reader.GetString(33),
+                PrintComponent4Name = reader.IsDBNull(34) ? string.Empty : reader.GetString(34),
+                PrintComponent4FacingDirection = reader.IsDBNull(35) ? string.Empty : reader.GetString(35),
+                PrintComponent5Name = reader.IsDBNull(36) ? string.Empty : reader.GetString(36),
+                PrintComponent5FacingDirection = reader.IsDBNull(37) ? string.Empty : reader.GetString(37)
             };
 
             return Page();

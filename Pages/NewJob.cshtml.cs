@@ -11,6 +11,9 @@ namespace JobEntryApp.Pages
 {
     public class NewJobModel : PageModel, IValidatableObject
     {
+        /// <summary>Production lead time: number of working days before Mail Date.</summary>
+        private const int ProductionLeadTimeDays = 21;
+
         private readonly IConfiguration _config;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<NewJobModel> _logger;
@@ -38,6 +41,11 @@ namespace JobEntryApp.Pages
         [TempData]
         public string? StatusMessage { get; set; }
 
+        public List<string> Customers { get; set; } = new();
+        public List<string> CsrList { get; set; } = new();
+        public List<string> DataProcessingList { get; set; } = new();
+        public List<string> SalesList { get; set; } = new();
+
         public void OnGet()
         {
             var last = GetLastCommittedJobNumber();
@@ -48,10 +56,63 @@ namespace JobEntryApp.Pages
 
             if (!Job.PrintPieceCount.HasValue)
                 Job.PrintPieceCount = 1;
+
+            LoadDropdownLists();
+        }
+
+        /// <summary>AJAX handler: GET /NewJob?handler=SubAccountsByCustomer&amp;customer=ACME</summary>
+        public IActionResult OnGetSubAccountsByCustomer(string customer)
+        {
+            if (string.IsNullOrWhiteSpace(customer))
+                return new JsonResult(Array.Empty<string>());
+
+            var cs = _config.GetConnectionString("JobEntryDb")
+                ?? throw new InvalidOperationException("Missing connection string 'JobEntryDb'.");
+
+            var list = new List<string>();
+            try
+            {
+                using var conn = new SqlConnection(cs);
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT SubAccountName
+                    FROM dbo.SubAccounts
+                    WHERE CustomerName = @Customer
+                    ORDER BY SubAccountName;";
+                cmd.Parameters.AddWithValue("@Customer", customer);
+                conn.Open();
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    list.Add(reader.GetString(0));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load sub-accounts for customer {Customer}.", customer);
+            }
+
+            return new JsonResult(list);
         }
 
         public async Task<IActionResult> OnPost(string action)
         {
+            // Auto-calculate StartDate before validation (ProductionLeadTimeDays working days before MailDate)
+            if (Job.MailDate.HasValue)
+            {
+                var calculated = CalculateStartDate(Job.MailDate.Value, ProductionLeadTimeDays);
+                if (!Job.StartDate.HasValue || Job.StartDate.Value == default)
+                    Job.StartDate = calculated;
+
+                if (Job.StartDate.Value.Date < DateTime.Today)
+                {
+                    Job.StartDate = DateTime.Today;
+                    Job.RushJob = true;
+                }
+                else
+                {
+                    Job.RushJob = false;
+                }
+            }
+
             if (!TryValidateModel(Job, nameof(Job)))
             {
                 var last = GetLastCommittedJobNumber();
@@ -62,6 +123,7 @@ namespace JobEntryApp.Pages
                 if (!Job.PrintPieceCount.HasValue)
                     Job.PrintPieceCount = 1;
 
+                LoadDropdownLists();
                 return Page();
             }
 
@@ -86,6 +148,7 @@ namespace JobEntryApp.Pages
                 if (!Job.PrintPieceCount.HasValue)
                     Job.PrintPieceCount = 1;
 
+                LoadDropdownLists();
                 return Page();
             }
 
@@ -95,6 +158,61 @@ namespace JobEntryApp.Pages
             }
 
             return RedirectToPage("/NewJob");
+        }
+
+        private void LoadDropdownLists()
+        {
+            var cs = _config.GetConnectionString("JobEntryDb");
+            if (string.IsNullOrWhiteSpace(cs))
+            {
+                _logger.LogWarning("Cannot load dropdown lists: connection string 'JobEntryDb' is missing.");
+                return;
+            }
+
+            try
+            {
+                using var conn = new SqlConnection(cs);
+                conn.Open();
+                Customers = ReadLookupList(conn, "SELECT CustomerName FROM dbo.Customers ORDER BY CustomerName");
+                CsrList = ReadLookupList(conn, "SELECT CSRName FROM dbo.CSR ORDER BY CSRName");
+                DataProcessingList = ReadLookupList(conn, "SELECT DataProcessingName FROM dbo.DataProcessing ORDER BY DataProcessingName");
+                SalesList = ReadLookupList(conn, "SELECT SalesName FROM dbo.Sales ORDER BY SalesName");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load dropdown lists.");
+            }
+        }
+
+        private static List<string> ReadLookupList(SqlConnection conn, string sql)
+        {
+            var list = new List<string>();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                    list.Add(reader.GetString(0));
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Returns the date that is <paramref name="workingDays"/> working days (Mon-Fri) before
+        /// <paramref name="fromDate"/>, skipping weekends.
+        /// </summary>
+        private static DateTime CalculateStartDate(DateTime fromDate, int workingDays)
+        {
+            var date = fromDate.Date;
+            var count = 0;
+            while (count < workingDays)
+            {
+                date = date.AddDays(-1);
+                if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
+                    count++;
+            }
+            return date;
         }
 
         private async Task CreateJobFoldersAsync(int jobNumber)
@@ -295,22 +413,32 @@ namespace JobEntryApp.Pages
                     cmd.CommandText = @"INSERT INTO dbo.Jobs (
                         JobNumber, JobName, MailDate, Customer, SubAccount, Csr, DataProcessing,
                         Quantity, PostageStyle, PostageClass, Sales, StartDate, Status,
-                        [Print], TwoWayMatch,
-                        MatchWayCount, MatchComponent1, MatchComponent2, MatchComponent3, MatchComponent4, MatchComponent5,
-                        PrintPieceCount, PrintComponent1Name, PrintComponent1FacingDirection,
+                        [Print], TwoWayMatch, RushJob,
+                        MatchWayCount,
+                        MatchComponent1, MatchComponent2, MatchComponent3, MatchComponent4, MatchComponent5,
+                        MatchComponent1FacingDirection, MatchComponent2FacingDirection,
+                        MatchComponent3FacingDirection, MatchComponent4FacingDirection, MatchComponent5FacingDirection,
+                        PrintPieceCount,
+                        PrintComponent1Name, PrintComponent1FacingDirection,
                         PrintComponent2Name, PrintComponent2FacingDirection,
                         PrintComponent3Name, PrintComponent3FacingDirection,
                         PrintComponent4Name, PrintComponent4FacingDirection,
+                        PrintComponent5Name, PrintComponent5FacingDirection,
                         Commingler
                     ) VALUES (
                         @JobNumber, @JobName, @MailDate, @Customer, @SubAccount, @Csr, @DataProcessing,
                         @Quantity, @PostageStyle, @PostageClass, @Sales, @StartDate, @Status,
-                        @Print, @TwoWayMatch,
-                        @MatchWayCount, @MatchComponent1, @MatchComponent2, @MatchComponent3, @MatchComponent4, @MatchComponent5,
-                        @PrintPieceCount, @PrintComponent1Name, @PrintComponent1FacingDirection,
+                        @Print, @TwoWayMatch, @RushJob,
+                        @MatchWayCount,
+                        @MatchComponent1, @MatchComponent2, @MatchComponent3, @MatchComponent4, @MatchComponent5,
+                        @MatchComponent1FacingDirection, @MatchComponent2FacingDirection,
+                        @MatchComponent3FacingDirection, @MatchComponent4FacingDirection, @MatchComponent5FacingDirection,
+                        @PrintPieceCount,
+                        @PrintComponent1Name, @PrintComponent1FacingDirection,
                         @PrintComponent2Name, @PrintComponent2FacingDirection,
                         @PrintComponent3Name, @PrintComponent3FacingDirection,
                         @PrintComponent4Name, @PrintComponent4FacingDirection,
+                        @PrintComponent5Name, @PrintComponent5FacingDirection,
                         @Commingler
                     );";
 
@@ -330,12 +458,18 @@ namespace JobEntryApp.Pages
                     cmd.Parameters.AddWithValue("@Status", job.Status ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@Print", job.Print);
                     cmd.Parameters.AddWithValue("@TwoWayMatch", job.TwoWayMatch);
+                    cmd.Parameters.AddWithValue("@RushJob", job.RushJob);
                     cmd.Parameters.AddWithValue("@MatchWayCount", job.MatchWayCount.HasValue ? job.MatchWayCount.Value : (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MatchComponent1", job.MatchComponent1 ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MatchComponent2", job.MatchComponent2 ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MatchComponent3", job.MatchComponent3 ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MatchComponent4", job.MatchComponent4 ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@MatchComponent5", job.MatchComponent5 ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@MatchComponent1FacingDirection", job.MatchComponent1FacingDirection ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@MatchComponent2FacingDirection", job.MatchComponent2FacingDirection ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@MatchComponent3FacingDirection", job.MatchComponent3FacingDirection ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@MatchComponent4FacingDirection", job.MatchComponent4FacingDirection ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@MatchComponent5FacingDirection", job.MatchComponent5FacingDirection ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@PrintPieceCount", job.PrintPieceCount.HasValue ? job.PrintPieceCount.Value : (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@PrintComponent1Name", job.PrintComponent1Name ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@PrintComponent1FacingDirection", job.PrintComponent1FacingDirection ?? (object)DBNull.Value);
@@ -345,6 +479,8 @@ namespace JobEntryApp.Pages
                     cmd.Parameters.AddWithValue("@PrintComponent3FacingDirection", job.PrintComponent3FacingDirection ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@PrintComponent4Name", job.PrintComponent4Name ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@PrintComponent4FacingDirection", job.PrintComponent4FacingDirection ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PrintComponent5Name", job.PrintComponent5Name ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PrintComponent5FacingDirection", job.PrintComponent5FacingDirection ?? (object)DBNull.Value);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -386,6 +522,8 @@ namespace JobEntryApp.Pages
                         DateTime.Today.ToString("yyyy-MM-dd"));
                 }
 
+                SaveJobComponents(conn, tx, job);
+
                 tx.Commit();
                 return tasksCreated;
             }
@@ -399,6 +537,79 @@ namespace JobEntryApp.Pages
         private static bool ShouldCreateTasksForJob(JobModel job)
         {
             return job.MailDate.HasValue && job.MailDate.Value.Date >= DateTime.Today;
+        }
+
+        private static void SaveJobComponents(SqlConnection conn, SqlTransaction tx, JobModel job)
+        {
+            // Remove any previously stored components for this job (idempotent re-save)
+            using (SqlCommand delCmd = conn.CreateCommand())
+            {
+                delCmd.Transaction = tx;
+                delCmd.CommandText = "DELETE FROM dbo.JobComponents WHERE JobNumber = @JobNumber;";
+                delCmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
+                delCmd.ExecuteNonQuery();
+            }
+
+            var components = new List<(string Name, string? FacingDir, int Order, string Type)>();
+
+            if (job.Print)
+            {
+                var printNames = new[]
+                {
+                    job.PrintComponent1Name, job.PrintComponent2Name, job.PrintComponent3Name,
+                    job.PrintComponent4Name, job.PrintComponent5Name
+                };
+                var printDirs = new[]
+                {
+                    job.PrintComponent1FacingDirection, job.PrintComponent2FacingDirection,
+                    job.PrintComponent3FacingDirection, job.PrintComponent4FacingDirection,
+                    job.PrintComponent5FacingDirection
+                };
+                var count = Math.Min(job.PrintPieceCount ?? 0, 5);
+                for (var i = 0; i < count; i++)
+                {
+                    var name = printNames[i];
+                    if (!string.IsNullOrWhiteSpace(name))
+                        components.Add((name, printDirs[i], i + 1, "Print"));
+                }
+            }
+
+            if (job.TwoWayMatch)
+            {
+                var matchNames = new[]
+                {
+                    job.MatchComponent1, job.MatchComponent2, job.MatchComponent3,
+                    job.MatchComponent4, job.MatchComponent5
+                };
+                var matchDirs = new[]
+                {
+                    job.MatchComponent1FacingDirection, job.MatchComponent2FacingDirection,
+                    job.MatchComponent3FacingDirection, job.MatchComponent4FacingDirection,
+                    job.MatchComponent5FacingDirection
+                };
+                var count = Math.Min(job.MatchWayCount ?? 0, 5);
+                for (var i = 0; i < count; i++)
+                {
+                    var name = matchNames[i];
+                    if (!string.IsNullOrWhiteSpace(name))
+                        components.Add((name, matchDirs[i], i + 1, "Match"));
+                }
+            }
+
+            foreach (var (name, facingDir, order, type) in components)
+            {
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = @"
+                    INSERT INTO dbo.JobComponents (JobNumber, ComponentName, FacingDirection, ComponentOrder, [Type])
+                    VALUES (@JobNumber, @ComponentName, @FacingDirection, @ComponentOrder, @Type);";
+                cmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
+                cmd.Parameters.AddWithValue("@ComponentName", name);
+                cmd.Parameters.AddWithValue("@FacingDirection", (object?)facingDir ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ComponentOrder", order);
+                cmd.Parameters.AddWithValue("@Type", type);
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private int CreateTasksFromTemplates(SqlConnection conn, SqlTransaction tx, JobModel job)

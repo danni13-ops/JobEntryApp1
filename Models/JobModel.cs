@@ -49,5 +49,15 @@ namespace JobEntryApp.Models
         public string? PrintComponent3FacingDirection { get; set; }
         public string? PrintComponent4Name { get; set; }
         public string? PrintComponent4FacingDirection { get; set; }
+        public string? PrintComponent5Name { get; set; }
+        public string? PrintComponent5FacingDirection { get; set; }
+
+        public string? MatchComponent1FacingDirection { get; set; }
+        public string? MatchComponent2FacingDirection { get; set; }
+        public string? MatchComponent3FacingDirection { get; set; }
+        public string? MatchComponent4FacingDirection { get; set; }
+        public string? MatchComponent5FacingDirection { get; set; }
+
+        public bool RushJob { get; set; }
     }
 }

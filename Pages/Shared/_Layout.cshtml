@@ -66,6 +66,12 @@
                             <i class="bi bi-kanban me-2"></i> Production
                         </a>
                     </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.StartsWith("/Admin") == true ? "active bg-white bg-opacity-10 rounded" : "")"
+                           asp-page="/Admin/LookupLists">
+                            <i class="bi bi-gear me-2"></i> Admin Lookups
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

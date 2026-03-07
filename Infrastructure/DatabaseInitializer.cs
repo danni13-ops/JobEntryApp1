@@ -20,6 +20,17 @@ namespace JobEntryApp.Infrastructure
 
                 try
                 {
+                    EnsureLookupTables(conn, logger);
+                    EnsureJobComponentsTable(conn, logger);
+                    EnsureJobsNewColumns(conn, logger);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Schema extension bootstrap partially failed. Continuing.");
+                }
+
+                try
+                {
                     EnsureUniqueIndex(
                         conn,
                         logger,
@@ -348,6 +359,111 @@ namespace JobEntryApp.Infrastructure
                 new SchedulingTemplate { TaskNumber = 21, TaskName = "Truck/Style Confirmed", Stage = "Postal", DefaultAssignee = "CSR", DaysOffset = 21, Dependencies = "20" },
                 new SchedulingTemplate { TaskNumber = 22, TaskName = "Mail Date", Stage = "Postal", DefaultAssignee = "CSR", DaysOffset = 22, Dependencies = "21" }
             ];
+        }
+
+        private static void EnsureLookupTables(SqlConnection conn, ILogger logger)
+        {
+            EnsureTable(conn, logger, "dbo.Customers", @"
+                CREATE TABLE [dbo].[Customers] (
+                    [CustomerID]   INT           IDENTITY(1,1) PRIMARY KEY,
+                    [CustomerName] NVARCHAR(200) NOT NULL
+                );");
+
+            EnsureTable(conn, logger, "dbo.SubAccounts", @"
+                CREATE TABLE [dbo].[SubAccounts] (
+                    [SubAccountID]   INT           IDENTITY(1,1) PRIMARY KEY,
+                    [CustomerName]   NVARCHAR(200) NOT NULL,
+                    [SubAccountName] NVARCHAR(200) NOT NULL
+                );");
+
+            EnsureTable(conn, logger, "dbo.CSR", @"
+                CREATE TABLE [dbo].[CSR] (
+                    [CSRID]   INT           IDENTITY(1,1) PRIMARY KEY,
+                    [CSRName] NVARCHAR(200) NOT NULL
+                );");
+
+            EnsureTable(conn, logger, "dbo.DataProcessing", @"
+                CREATE TABLE [dbo].[DataProcessing] (
+                    [DataProcessingID]   INT           IDENTITY(1,1) PRIMARY KEY,
+                    [DataProcessingName] NVARCHAR(200) NOT NULL
+                );");
+
+            EnsureTable(conn, logger, "dbo.Sales", @"
+                CREATE TABLE [dbo].[Sales] (
+                    [SalesID]   INT           IDENTITY(1,1) PRIMARY KEY,
+                    [SalesName] NVARCHAR(200) NOT NULL
+                );");
+        }
+
+        private static void EnsureJobComponentsTable(SqlConnection conn, ILogger logger)
+        {
+            if (TableExists(conn, "dbo.JobComponents")) return;
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                CREATE TABLE [dbo].[JobComponents] (
+                    [ComponentID]      INT           IDENTITY(1,1) PRIMARY KEY,
+                    [JobNumber]        INT           NOT NULL,
+                    [ComponentName]    NVARCHAR(200) NOT NULL,
+                    [FacingDirection]  NVARCHAR(50)  NULL,
+                    [ComponentOrder]   INT           NOT NULL DEFAULT 1,
+                    [Type]             NVARCHAR(10)  NOT NULL DEFAULT 'Print'
+                );
+                CREATE INDEX [IX_JobComponents_JobNumber] ON [dbo].[JobComponents]([JobNumber]);";
+            cmd.ExecuteNonQuery();
+            logger.LogInformation("Created table dbo.JobComponents.");
+        }
+
+        private static void EnsureJobsNewColumns(SqlConnection conn, ILogger logger)
+        {
+            EnsureColumn(conn, logger, "Jobs", "RushJob",                          "BIT NOT NULL DEFAULT 0");
+            EnsureColumn(conn, logger, "Jobs", "PrintComponent5Name",              "NVARCHAR(200) NULL");
+            EnsureColumn(conn, logger, "Jobs", "PrintComponent5FacingDirection",   "NVARCHAR(50) NULL");
+            EnsureColumn(conn, logger, "Jobs", "MatchComponent1FacingDirection",   "NVARCHAR(50) NULL");
+            EnsureColumn(conn, logger, "Jobs", "MatchComponent2FacingDirection",   "NVARCHAR(50) NULL");
+            EnsureColumn(conn, logger, "Jobs", "MatchComponent3FacingDirection",   "NVARCHAR(50) NULL");
+            EnsureColumn(conn, logger, "Jobs", "MatchComponent4FacingDirection",   "NVARCHAR(50) NULL");
+            EnsureColumn(conn, logger, "Jobs", "MatchComponent5FacingDirection",   "NVARCHAR(50) NULL");
+        }
+
+        private static void EnsureTable(SqlConnection conn, ILogger logger, string fullTableName, string createSql)
+        {
+            if (TableExists(conn, fullTableName)) return;
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = createSql;
+            cmd.ExecuteNonQuery();
+            logger.LogInformation("Created table {TableName}.", fullTableName);
+        }
+
+        private static readonly HashSet<string> AllowedTableNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Jobs", "Tasks", "MailChart", "TaskTemplates",
+            "Customers", "SubAccounts", "CSR", "DataProcessing", "Sales", "JobComponents"
+        };
+
+        private static void EnsureColumn(SqlConnection conn, ILogger logger, string tableName, string columnName, string columnDef)
+        {
+            // Validate against a whitelist before using in dynamic SQL
+            if (!AllowedTableNames.Contains(tableName))
+            {
+                logger.LogWarning("EnsureColumn called with unrecognized table name '{TableName}'. Skipping.", tableName);
+                return;
+            }
+
+            using var checkCmd = conn.CreateCommand();
+            checkCmd.CommandText = @"
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'dbo'
+                  AND TABLE_NAME   = @TableName
+                  AND COLUMN_NAME  = @ColumnName;";
+            checkCmd.Parameters.AddWithValue("@TableName", tableName);
+            checkCmd.Parameters.AddWithValue("@ColumnName", columnName);
+            if (Convert.ToInt32(checkCmd.ExecuteScalar()) > 0) return;
+
+            using var alterCmd = conn.CreateCommand();
+            alterCmd.CommandText = $"ALTER TABLE [dbo].[{tableName}] ADD [{columnName}] {columnDef};";
+            alterCmd.ExecuteNonQuery();
+            logger.LogInformation("Added column {Column} to dbo.{Table}.", columnName, tableName);
         }
 
         private static void EnsureUniqueIndex(
