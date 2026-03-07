@@ -109,17 +109,62 @@ else
         </div>
     </div>
 
-    <!-- Tasks placeholder -->
-    <div class="card mb-3">
-        <div class="card-header">Tasks</div>
-        <div class="card-body">
-            <p class="text-muted">Task list with stages, assignees, and statuses will go here.</p>
+    <!-- Progress & Milestones -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-bar-chart-steps me-1"></i>Progress</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">Job completion progress will display here once milestones are configured.</p>
+                    <div class="progress" style="height: 1.25rem;" role="progressbar" aria-label="Job progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar bg-primary" style="width: 0%">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-flag me-1"></i>Milestones</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small text-muted">
+                        <li class="mb-1"><i class="bi bi-circle me-1"></i> Data Processing</li>
+                        <li class="mb-1"><i class="bi bi-circle me-1"></i> Ready for Production</li>
+                        <li class="mb-1"><i class="bi bi-circle me-1"></i> In Production</li>
+                        <li class="mb-1"><i class="bi bi-circle me-1"></i> Mailed</li>
+                    </ul>
+                    <p class="text-muted small mt-2 mb-0">Milestone tracking will update automatically as tasks complete.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Cards & Documents -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-card-checklist me-1"></i>Control Cards</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-0">
+                        Laser, Inkjet, and Insertion control cards will be generated and saved here once the Control Card integration is complete.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-folder2 me-1"></i>Documents</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-0">
+                        Art, postal forms, signoffs, and reports will be accessible here once folder integration is enabled.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Comments & Notes placeholder -->
     <div class="card mb-3">
-        <div class="card-header">Comments &amp; Notes</div>
+        <div class="card-header fw-semibold"><i class="bi bi-chat-left-text me-1"></i>Comments &amp; Notes</div>
         <div class="card-body">
             <p class="text-muted">Comments and notes for this job will go here.</p>
         </div>

@@ -1,0 +1,61 @@
+@page
+@model JobEntryApp.Pages.Jobs.SearchModel
+@{
+    ViewData["Title"] = "Job Information";
+}
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <a asp-page="/Index" class="text-decoration-none text-muted small"><i class="bi bi-house-door me-1"></i> Home</a>
+        <span class="text-muted small mx-1">/</span>
+        <span class="text-muted small">Job Information</span>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-search text-primary" style="font-size: 2.5rem;"></i>
+                        <h2 class="h4 mt-2 mb-1">Job Information</h2>
+                        <p class="text-muted small">Enter a job number to open job details</p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-warning py-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i> @Model.ErrorMessage
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="jobNumberInput" class="form-label fw-semibold">Job Number</label>
+                            <input type="number"
+                                   id="jobNumberInput"
+                                   name="JobNumber"
+                                   value="@Model.JobNumber"
+                                   class="form-control form-control-lg"
+                                   placeholder="e.g. 42192"
+                                   min="1"
+                                   autofocus />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right-circle me-1"></i> Open Job
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-3" />
+
+                    <div class="text-center">
+                        <a asp-page="/Jobs/Index" class="text-decoration-none text-muted small">
+                            <i class="bi bi-folder2-open me-1"></i> Browse all jobs in Job Book
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
