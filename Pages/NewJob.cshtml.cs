@@ -6,6 +6,7 @@ using JobEntryApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Mvc.Rendering; // Add this at the top if not present
 
 namespace JobEntryApp.Pages
 {
@@ -16,7 +17,14 @@ namespace JobEntryApp.Pages
         private readonly ILogger<NewJobModel> _logger;
         private readonly IWebHostEnvironment _environment;
 
-        public NewJobModel(
+		// Replace the old field and property definitions with these auto-properties:
+		public List<SelectListItem> CustomerList { get; set; } = new();
+		public List<SelectListItem> SubAccountList { get; set; } = new();
+		public List<SelectListItem> CsrList { get; set; } = new();
+		public List<SelectListItem> DataProcessingList { get; set; } = new();
+		public List<SelectListItem> SalesList { get; set; } = new();
+
+		public NewJobModel(
             IConfiguration config,
             IHttpClientFactory httpClientFactory,
             ILogger<NewJobModel> logger,
@@ -95,6 +103,26 @@ namespace JobEntryApp.Pages
             }
 
             return RedirectToPage("/NewJob");
+        }
+
+        private void LoadSales()
+        {
+            var cs = _config.GetConnectionString("JobEntryDb");
+            using var conn = new SqlConnection(cs);
+            conn.Open();
+
+            using var cmd = new SqlCommand("SELECT Name FROM Sales ORDER BY Name", conn);
+            using var reader = cmd.ExecuteReader();
+
+            SalesList.Clear();
+            while (reader.Read())
+            {
+                SalesList.Add(new SelectListItem
+                {
+                    Value = reader.GetString(0),
+                    Text = reader.GetString(0)
+                });
+            }
         }
 
         private async Task CreateJobFoldersAsync(int jobNumber)

@@ -14,74 +14,185 @@
 <form method="post" class="row g-3">
     <div asp-validation-summary="All" class="text-danger"></div>
 
-    <div class="col-md-3">
-        <label asp-for="Job.JobNumber" class="form-label"></label>
-        <input asp-for="Job.JobNumber" class="form-control" readonly />
-    </div>
-    <div class="col-md-9">
-        <label asp-for="Job.JobName" class="form-label"></label>
-        <input asp-for="Job.JobName" class="form-control" />
-    </div>
+    <!-- JOB INFO -->
+    <fieldset>
+        <legend>Job Info</legend>
+        <div class="col-md-3">
+            <label asp-for="Job.JobNumber" class="form-label"></label>
+            <input asp-for="Job.JobNumber" class="form-control" readonly />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.Customer" class="form-label"></label>
+            <select asp-for="Job.Customer" class="form-control" asp-items="Model.CustomerList"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.SubAccount" class="form-label"></label>
+            <select asp-for="Job.SubAccount" class="form-control" asp-items="Model.SubAccountList"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.JobName" class="form-label"></label>
+            <input asp-for="Job.JobName" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.Quantity" class="form-label"></label>
+            <input asp-for="Job.Quantity" class="form-control" />
+        </div>
+    </fieldset>
 
-    <div class="col-md-4">
-        <label asp-for="Job.Customer" class="form-label"></label>
-        <input asp-for="Job.Customer" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.SubAccount" class="form-label"></label>
-        <input asp-for="Job.SubAccount" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.Status" class="form-label"></label>
-        <input asp-for="Job.Status" class="form-control" />
-    </div>
+    <!-- SCHEDULE -->
+    <fieldset>
+        <legend>Schedule</legend>
+        <div class="col-md-3">
+            <label asp-for="Job.StartDate" class="form-label"></label>
+            <input asp-for="Job.StartDate" class="form-control" type="date" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.DataDueDate"
+                   class="form-label"></label>
+            <input asp-for="Job.DataDueDate" class="form-control" type="date" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.MailDate" class="form-label"></label>
+            <input asp-for="Job.MailDate" class="form-control" type="date" />
+        </div>
+    </fieldset>
 
-    <div class="col-md-3">
-        <label asp-for="Job.StartDate" class="form-label"></label>
-        <input asp-for="Job.StartDate" class="form-control" type="date" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.MailDate" class="form-label"></label>
-        <input asp-for="Job.MailDate" class="form-control" type="date" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.Quantity" class="form-label"></label>
-        <input asp-for="Job.Quantity" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.PostageStyle" class="form-label"></label>
-        <input asp-for="Job.PostageStyle" class="form-control" />
-    </div>
+    <!-- POSTAGE -->
+    <fieldset>
+        <legend>Postage</legend>
+        <div class="col-md-3">
+            <label asp-for="Job.PostageClass" class="form-label"></label>
+            <select asp-for="Job.PostageClass" class="form-control">
+                <option value="Full 1st Class">Full 1st Class</option>
+                <option value="1st Class">1st Class</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.PostageStyle" class="form-label"></label>
+            <select asp-for="Job.PostageStyle" class="form-control">
+                <option value="Stamp">Stamp</option>
+                <option value="Meter">Meter</option>
+                <option value="Indicia">Indicia</option>
+            </select>
+        </div>
+    </fieldset>
 
-    <div class="col-md-4">
-        <label asp-for="Job.PostageClass" class="form-label"></label>
-        <input asp-for="Job.PostageClass" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.Csr" class="form-label"></label>
-        <input asp-for="Job.Csr" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.DataProcessing" class="form-label"></label>
-        <input asp-for="Job.DataProcessing" class="form-control" />
-    </div>
+    <!-- RESPONSIBILITY -->
+    <fieldset>
+        <legend>Responsibility</legend>
+        <div class="col-md-3">
+            <label asp-for="Job.Csr" class="form-label"></label>
+            <select asp-for="Job.Csr" class="form-control" asp-items="Model.CsrList"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.DataProcessing" class="form-label"></label>
+            <select asp-for="Job.DataProcessing" class="form-control" asp-items="Model.DataProcessingList"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Job.Sales" class="form-label"></label>
+            <select asp-for="Job.Sales" class="form-control" asp-items="Model.SalesList"></select>
+        </div>
+    </fieldset>
 
-    <div class="col-md-3 form-check ms-3">
-        <input asp-for="Job.Print" class="form-check-input" />
-        <label asp-for="Job.Print" class="form-check-label"></label>
-    </div>
-    <div class="col-md-3 form-check ms-3">
-        <input asp-for="Job.TwoWayMatch" class="form-check-input" />
-        <label asp-for="Job.TwoWayMatch" class="form-check-label"></label>
-    </div>
+    <!-- PRINT DETAILS -->
+    <fieldset>
+        <legend>Print Details</legend>
+        <div class="col-md-3">
+            <label>Print?</label>
+            <select id="printSelect" name="Print" class="form-control" onchange="togglePrintComponents()">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+        <div id="printComponentsSection" style="display:none;">
+            <div class="col-md-3">
+                <label>How many components?</label>
+                <select id="componentCount" name="ComponentCount" class="form-control" onchange="renderComponentFields()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div id="componentFields"></div>
+        </div>
+    </fieldset>
 
-    <div class="col-12 d-flex gap-2 mt-2">
-        <button type="submit" name="action" value="createAndNew" class="btn btn-primary">Save and New</button>
-        <button type="submit" name="action" value="createAndHome" class="btn btn-outline-secondary">Save and Home</button>
-        <a asp-page="/Jobs/Index" class="btn btn-link">Cancel</a>
+    <!-- MATCH MAIL -->
+    <fieldset>
+        <legend>Match Mail</legend>
+        <div class="col-md-3">
+            <label>Match Mail?</label>
+            <select id="matchMailSelect" name="MatchMail" class="form-control" onchange="toggleMatchComponents()">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+        <div id="matchComponentsSection" style="display:none;">
+            <div class="col-md-3">
+                <label>How many way match?</label>
+                <select id="matchCount" name="MatchCount" class="form-control" onchange="renderMatchFields()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div id="matchFields"></div>
+        </div>
+    </fieldset>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Save Job</button>
     </div>
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePrintComponents() {
+            var print = document.getElementById('printSelect').value === 'true';
+            document.getElementById('printComponentsSection').style.display = print ? '' : 'none';
+        }
+        function renderComponentFields() {
+            var count = parseInt(document.getElementById('componentCount').value);
+            var html = '';
+            for (var i = 1; i <= count; i++) {
+                html += `<div class="row mb-2">
+                    <div class="col-md-6">
+                        <label>Component ${i} Name</label>
+                        <input name="ComponentName${i}" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label>Facing Direction</label>
+                        <input name="FacingDirection${i}" class="form-control" />
+                    </div>
+                </div>`;
+            }
+            document.getElementById('componentFields').innerHTML = html;
+        }
+        function toggleMatchComponents() {
+            var match = document.getElementById('matchMailSelect').value === 'true';
+            document.getElementById('matchComponentsSection').style.display = match ? '' : 'none';
+        }
+        function renderMatchFields() {
+            var count = parseInt(document.getElementById('matchCount').value);
+            var html = '';
+            for (var i = 1; i <= count; i++) {
+                html += `<div class="row mb-2">
+                    <div class="col-md-6">
+                        <label>Match Component ${i} Name</label>
+                        <input name="MatchComponentName${i}" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label>Facing Direction</label>
+                        <input name="MatchFacingDirection${i}" class="form-control" />
+                    </div>
+                </div>`;
+            }
+            document.getElementById('matchFields').innerHTML = html;
+        }
+    </script>
 }
