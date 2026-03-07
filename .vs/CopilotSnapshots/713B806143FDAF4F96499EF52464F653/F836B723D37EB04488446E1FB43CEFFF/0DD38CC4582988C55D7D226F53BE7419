@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace JobEntryApp.Models
 {
@@ -15,7 +15,9 @@ namespace JobEntryApp.Models
         public DateTime? DataDueDate { get; set; }
 
         public DateTime? StartDate { get; set; }   // <-- Add this property
-        public DateTime? EndDate { get; set; }
+public DateTime? EndDate
+		{
+			get; set;
         [Required(ErrorMessage = "Mail Date is required.")]
         public DateTime? MailDate { get; set; }
 

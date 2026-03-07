@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\models\\jobmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|solutionrelative:models\\jobmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\pages\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|solutionrelative:pages\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\pages\\tasktemplates.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|solutionrelative:pages\\tasktemplates.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\pages\\newjob.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|solutionrelative:pages\\newjob.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\models\\jobmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|solutionrelative:models\\jobmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{387695E7-C7A8-840F-831E-5B97A541ED55}|JobEntryApp.csproj|c:\\users\\daniellesantone\\source\\repos\\danni13-ops\\jobentryapp1\\pages\\newjob.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -22,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -41,47 +49,69 @@
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
-            },
-            {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "JobModel.cs",
-              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Models\\JobModel.cs",
-              "RelativeDocumentMoniker": "Models\\JobModel.cs",
-              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Models\\JobModel.cs",
-              "RelativeToolTip": "Models\\JobModel.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAkwBEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-07T00:58:08.659Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "NewJob.cshtml.cs",
-              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml.cs",
-              "RelativeDocumentMoniker": "Pages\\NewJob.cshtml.cs",
-              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml.cs",
-              "RelativeToolTip": "Pages\\NewJob.cshtml.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAIA3wCQAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-07T00:54:40.162Z",
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "Pages\\Shared\\_Layout.cshtml",
+              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "Pages\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAH8AAAAAAAAAAAAYwJ0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-03-07T09:08:16.417Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "TaskTemplates.cshtml.cs",
+              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\TaskTemplates.cshtml.cs",
+              "RelativeDocumentMoniker": "Pages\\TaskTemplates.cshtml.cs",
+              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\TaskTemplates.cshtml.cs",
+              "RelativeToolTip": "Pages\\TaskTemplates.cshtml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-07T09:03:05.921Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "JobModel.cs",
+              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Models\\JobModel.cs",
+              "RelativeDocumentMoniker": "Models\\JobModel.cs",
+              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Models\\JobModel.cs",
+              "RelativeToolTip": "Models\\JobModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-07T00:58:08.659Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "NewJob.cshtml.cs",
+              "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml.cs",
+              "RelativeDocumentMoniker": "Pages\\NewJob.cshtml.cs",
+              "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml.cs",
+              "RelativeToolTip": "Pages\\NewJob.cshtml.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAIAzwCQAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-07T00:54:40.162Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "NewJob.cshtml",
               "DocumentMoniker": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml",
               "RelativeDocumentMoniker": "Pages\\NewJob.cshtml",
               "ToolTip": "C:\\Users\\DanielleSantone\\source\\repos\\danni13-ops\\JobEntryApp1\\Pages\\NewJob.cshtml",
               "RelativeToolTip": "Pages\\NewJob.cshtml",
-              "ViewState": "AgIAACEAAAAAAAAAAAAlwDEAAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAACEAAAAAAAAAAAAlwDYAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-03-07T00:47:09.168Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-07T00:47:09.168Z"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
             }
           ]
         }

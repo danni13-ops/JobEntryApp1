@@ -29,11 +29,51 @@
                 <hr class="bg-white opacity-25" />
                 <h6 class="text-white-50 text-uppercase small mb-3">Navigation</h6>
 
-                <ul class="nav flex-column">
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active bg-white bg-opacity-10 rounded" : "")"
-                           asp-page="/Index">
-                            <i class="bi bi-house-door me-2"></i> Home
+                <<ul class="nav flex-column">
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/Index">
+            <i class="bi bi-house-door me-2"></i> Home
+        </a>
+    </li>
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/NewJob" ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/NewJob">
+            <i class="bi bi-plus-circle me-2"></i> Job Entry Form
+        </a>
+    </li>
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Jobs") == true ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/Jobs/Index">
+            <i class="bi bi-briefcase me-2"></i> Job Book
+        </a>
+    </li>
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Jobs/Search" ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/Jobs/Search">
+            <i class="bi bi-search me-2"></i> Job Information
+        </a>
+    </li>
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Mailchart") == true ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/Mailchart/Index">
+            <i class="bi bi-calendar-event me-2"></i> Mail Chart
+        </a>
+    </li>
+
+    <li class="nav-item mb-2">
+        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskDashboard" ? "active bg-white bg-opacity-10 rounded" : "")"
+           asp-page="/TaskDashboard">
+            <i class="bi bi-kanban me-2"></i> Production
+        </a>
+    </li>
+
+</ul>
                         </a>
                     </li>
                     <li class="nav-item mb-2">
