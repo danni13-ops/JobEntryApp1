@@ -4,78 +4,285 @@
     ViewData["Title"] = "Job Entry Form";
 }
 
-<h1>Job Entry Form</h1>
+<h1 class="mb-4">Job Entry Form</h1>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
     <div class="alert alert-success">@Model.StatusMessage</div>
 }
 
-<form method="post" class="row g-3">
-    <div asp-validation-summary="All" class="text-danger"></div>
+<form method="post" class="needs-validation" novalidate>
+    <div asp-validation-summary="All" class="alert alert-danger" style="display:none" id="validation-summary"></div>
 
-    <div class="col-md-3">
-        <label asp-for="Job.JobNumber" class="form-label"></label>
-        <input asp-for="Job.JobNumber" class="form-control" readonly />
-    </div>
-    <div class="col-md-9">
-        <label asp-for="Job.JobName" class="form-label"></label>
-        <input asp-for="Job.JobName" class="form-control" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Job.Customer" class="form-label"></label>
-        <input asp-for="Job.Customer" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.SubAccount" class="form-label"></label>
-        <input asp-for="Job.SubAccount" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.Status" class="form-label"></label>
-        <input asp-for="Job.Status" class="form-control" />
-    </div>
-
-    <div class="col-md-3">
-        <label asp-for="Job.StartDate" class="form-label"></label>
-        <input asp-for="Job.StartDate" class="form-control" type="date" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.MailDate" class="form-label"></label>
-        <input asp-for="Job.MailDate" class="form-control" type="date" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.Quantity" class="form-label"></label>
-        <input asp-for="Job.Quantity" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Job.PostageStyle" class="form-label"></label>
-        <input asp-for="Job.PostageStyle" class="form-control" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Job.PostageClass" class="form-label"></label>
-        <input asp-for="Job.PostageClass" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.Csr" class="form-label"></label>
-        <input asp-for="Job.Csr" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Job.DataProcessing" class="form-label"></label>
-        <input asp-for="Job.DataProcessing" class="form-control" />
+    @* ── Job Info ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Job Info</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label asp-for="Job.JobNumber" class="form-label"></label>
+                    <input asp-for="Job.JobNumber" class="form-control" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Job.Customer" class="form-label"></label>
+                    <select asp-for="Job.Customer" class="form-select" id="customerSelect">
+                        <option value="">-- Select Customer --</option>
+                        @foreach (var c in Model.Customers)
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Job.Customer" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Job.SubAccount" class="form-label">Sub Account</label>
+                    <select asp-for="Job.SubAccount" class="form-select" id="subAccountSelect">
+                        <option value="">-- Select Sub Account --</option>
+                        @if (!string.IsNullOrEmpty(Model.Job.SubAccount))
+                        {
+                            <option value="@Model.Job.SubAccount" selected>@Model.Job.SubAccount</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="Job.JobName" class="form-label"></label>
+                    <input asp-for="Job.JobName" class="form-control" />
+                    <span asp-validation-for="Job.JobName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Job.Quantity" class="form-label"></label>
+                    <input asp-for="Job.Quantity" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="Job.Quantity" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-3 form-check ms-3">
-        <input asp-for="Job.Print" class="form-check-input" />
-        <label asp-for="Job.Print" class="form-check-label"></label>
-    </div>
-    <div class="col-md-3 form-check ms-3">
-        <input asp-for="Job.TwoWayMatch" class="form-check-input" />
-        <label asp-for="Job.TwoWayMatch" class="form-check-label"></label>
+    @* ── Schedule ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Schedule</div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label asp-for="Job.MailDate" class="form-label"></label>
+                    <input asp-for="Job.MailDate" class="form-control" type="date" id="mailDateInput" required />
+                    <span asp-validation-for="Job.MailDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Job.StartDate" class="form-label">Start Date <small class="text-muted">(auto-calculated, editable)</small></label>
+                    <input asp-for="Job.StartDate" class="form-control" type="date" id="startDateInput" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div id="rushJobAlert" class="alert alert-warning mb-0 py-2 px-3 w-100" style="display:none">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>Rush Job</strong> – Start Date set to today
+                    </div>
+                    @if (Model.Job.RushJob)
+                    {
+                        <div class="alert alert-warning mb-0 py-2 px-3 w-100">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>Rush Job</strong>
+                        </div>
+                    }
+                </div>
+                <input type="hidden" asp-for="Job.RushJob" id="rushJobHidden" />
+            </div>
+        </div>
     </div>
 
-    <div class="col-12 d-flex gap-2 mt-2">
+    @* ── Postage ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Postage</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Job.PostageClass" class="form-label">Postage Class</label>
+                    <select asp-for="Job.PostageClass" class="form-select">
+                        <option value="">-- Select --</option>
+                        <option value="Full 1st Class">Full 1st Class</option>
+                        <option value="1st Class">1st Class</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Job.PostageStyle" class="form-label">Postage Style</label>
+                    <select asp-for="Job.PostageStyle" class="form-select">
+                        <option value="">-- Select --</option>
+                        <option value="Stamp">Stamp</option>
+                        <option value="Meter">Meter</option>
+                        <option value="Indicia">Indicia</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Responsibility ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Responsibility</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Job.Csr" class="form-label">CSR</label>
+                    <select asp-for="Job.Csr" class="form-select">
+                        <option value="">-- Select CSR --</option>
+                        @foreach (var c in Model.CsrList)
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Job.DataProcessing" class="form-label">Data Processing</label>
+                    <select asp-for="Job.DataProcessing" class="form-select">
+                        <option value="">-- Select --</option>
+                        @foreach (var dp in Model.DataProcessingList)
+                        {
+                            <option value="@dp">@dp</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Job.Sales" class="form-label">Sales</label>
+                    <select asp-for="Job.Sales" class="form-select">
+                        <option value="">-- Select Sales --</option>
+                        @foreach (var s in Model.SalesList)
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Print Details ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Print Details</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input asp-for="Job.Print" class="form-check-input" type="checkbox" id="printCheck" role="switch" />
+                    <label asp-for="Job.Print" class="form-check-label fw-semibold">Print?</label>
+                </div>
+            </div>
+            <div id="printSection" style="@(Model.Job.Print ? "" : "display:none")">
+                <div class="mb-3">
+                    <label asp-for="Job.PrintPieceCount" class="form-label">How many components? (1–5)</label>
+                    <select asp-for="Job.PrintPieceCount" class="form-select w-auto" id="printPieceCount">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <option value="@i" selected="@(Model.Job.PrintPieceCount == i ? "selected" : null)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="row g-2" id="printComponents">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var nameFor = $"Job.PrintComponent{i}Name";
+                        var dirFor  = $"Job.PrintComponent{i}FacingDirection";
+                        var nameVal = i switch {
+                            1 => Model.Job.PrintComponent1Name,
+                            2 => Model.Job.PrintComponent2Name,
+                            3 => Model.Job.PrintComponent3Name,
+                            4 => Model.Job.PrintComponent4Name,
+                            5 => Model.Job.PrintComponent5Name,
+                            _ => null
+                        };
+                        var dirVal = i switch {
+                            1 => Model.Job.PrintComponent1FacingDirection,
+                            2 => Model.Job.PrintComponent2FacingDirection,
+                            3 => Model.Job.PrintComponent3FacingDirection,
+                            4 => Model.Job.PrintComponent4FacingDirection,
+                            5 => Model.Job.PrintComponent5FacingDirection,
+                            _ => null
+                        };
+                        <div class="col-md-6 print-component-row" id="printRow@(i)" style="@(i <= (Model.Job.PrintPieceCount ?? 1) ? "" : "display:none")">
+                            <div class="card border-secondary">
+                                <div class="card-header small py-1">Component @i</div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            <label class="form-label small mb-0">Name</label>
+                                            <input name="@nameFor" value="@nameVal" class="form-control form-control-sm" placeholder="Component name" />
+                                        </div>
+                                        <div class="col">
+                                            <label class="form-label small mb-0">Facing Direction</label>
+                                            <input name="@dirFor" value="@dirVal" class="form-control form-control-sm" placeholder="e.g. Face up" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Match Mail ── *@
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Match Mail</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input asp-for="Job.TwoWayMatch" class="form-check-input" type="checkbox" id="matchCheck" role="switch" />
+                    <label asp-for="Job.TwoWayMatch" class="form-check-label fw-semibold">Match Mail?</label>
+                </div>
+            </div>
+            <div id="matchSection" style="@(Model.Job.TwoWayMatch ? "" : "display:none")">
+                <div class="mb-3">
+                    <label asp-for="Job.MatchWayCount" class="form-label">How many way match? (1–5)</label>
+                    <select asp-for="Job.MatchWayCount" class="form-select w-auto" id="matchWayCount">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <option value="@i" selected="@(Model.Job.MatchWayCount == i ? "selected" : null)">@i</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Job.MatchWayCount" class="text-danger small"></span>
+                </div>
+                <div class="row g-2" id="matchComponents">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var nameFor = $"Job.MatchComponent{i}";
+                        var dirFor  = $"Job.MatchComponent{i}FacingDirection";
+                        var nameVal = i switch {
+                            1 => Model.Job.MatchComponent1,
+                            2 => Model.Job.MatchComponent2,
+                            3 => Model.Job.MatchComponent3,
+                            4 => Model.Job.MatchComponent4,
+                            5 => Model.Job.MatchComponent5,
+                            _ => null
+                        };
+                        var dirVal = i switch {
+                            1 => Model.Job.MatchComponent1FacingDirection,
+                            2 => Model.Job.MatchComponent2FacingDirection,
+                            3 => Model.Job.MatchComponent3FacingDirection,
+                            4 => Model.Job.MatchComponent4FacingDirection,
+                            5 => Model.Job.MatchComponent5FacingDirection,
+                            _ => null
+                        };
+                        <div class="col-md-6 match-component-row" id="matchRow@(i)" style="@(i <= (Model.Job.MatchWayCount ?? 2) ? "" : "display:none")">
+                            <div class="card border-secondary">
+                                <div class="card-header small py-1">Match Component @i</div>
+                                <div class="card-body py-2">
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            <label class="form-label small mb-0">Name</label>
+                                            <input name="@nameFor" value="@nameVal" class="form-control form-control-sm" placeholder="Component name" />
+                                        </div>
+                                        <div class="col">
+                                            <label class="form-label small mb-0">Facing Direction</label>
+                                            <input name="@dirFor" value="@dirVal" class="form-control form-control-sm" placeholder="e.g. Face up" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
         <button type="submit" name="action" value="createAndNew" class="btn btn-primary">Save and New</button>
         <button type="submit" name="action" value="createAndHome" class="btn btn-outline-secondary">Save and Home</button>
         <a asp-page="/Jobs/Index" class="btn btn-link">Cancel</a>
@@ -84,4 +291,151 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+    (function () {
+        // ── Validation summary visibility ──
+        var vs = document.getElementById('validation-summary');
+        if (vs && vs.querySelector('li')) vs.style.display = '';
+
+        // ── SubAccount AJAX ──
+        var customerSel = document.getElementById('customerSelect');
+        var subAccSel   = document.getElementById('subAccountSelect');
+
+        function loadSubAccounts(customer) {
+            subAccSel.innerHTML = '<option value="">-- Select Sub Account --</option>';
+            if (!customer) return;
+            fetch('/NewJob?handler=SubAccountsByCustomer&customer=' + encodeURIComponent(customer))
+                .then(function(r) { return r.json(); })
+                .then(function(list) {
+                    list.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s; opt.textContent = s;
+                        subAccSel.appendChild(opt);
+                    });
+                })
+                .catch(function() {});
+        }
+
+        if (customerSel) {
+            customerSel.addEventListener('change', function() {
+                loadSubAccounts(this.value);
+            });
+        }
+
+        // ── Start Date auto-calculation ──
+        var mailInput  = document.getElementById('mailDateInput');
+        var startInput = document.getElementById('startDateInput');
+        var rushAlert  = document.getElementById('rushJobAlert');
+        var rushHidden = document.getElementById('rushJobHidden');
+
+        function addWorkingDays(date, days) {
+            var d = new Date(date);
+            var count = 0;
+            while (count < days) {
+                d.setDate(d.getDate() - 1);
+                if (d.getDay() !== 0 && d.getDay() !== 6) count++;
+            }
+            return d;
+        }
+
+        function toInputDate(d) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+
+        function updateStartDate() {
+            if (!mailInput || !mailInput.value) return;
+            // Parse as local date (YYYY-MM-DD) to avoid timezone shifts
+            var parts = mailInput.value.split('-');
+            if (parts.length !== 3) return;
+            var y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
+            if (isNaN(y) || isNaN(mo) || isNaN(d)) return;
+            var mailDate = new Date(y, mo, d);
+            var calc = addWorkingDays(mailDate, 21);
+            var today = new Date(); today.setHours(0,0,0,0);
+
+            var isRush = calc < today;
+            var finalStart = isRush ? today : calc;
+
+            if (startInput && !startInput.dataset.userEdited) {
+                startInput.value = toInputDate(finalStart);
+            }
+
+            if (rushAlert) rushAlert.style.display = isRush ? 'block' : 'none';
+            if (rushHidden) rushHidden.value = isRush ? 'true' : 'false';
+        }
+
+        if (mailInput) {
+            mailInput.addEventListener('change', function() {
+                if (startInput) startInput.dataset.userEdited = '';
+                updateStartDate();
+            });
+        }
+
+        if (startInput) {
+            startInput.addEventListener('change', function() {
+                this.dataset.userEdited = '1';
+                // Recalculate rush status based on user-edited start date
+                if (!this.value) return;
+                var parts = this.value.split('-');
+                if (parts.length !== 3) return;
+                var y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
+                if (isNaN(y) || isNaN(mo) || isNaN(d)) return;
+                var sd = new Date(y, mo, d);
+                var today = new Date(); today.setHours(0,0,0,0);
+                var isRush = sd < today;
+                if (rushAlert) rushAlert.style.display = isRush ? 'block' : 'none';
+                if (rushHidden) rushHidden.value = isRush ? 'true' : 'false';
+            });
+        }
+
+        // ── Print show/hide ──
+        var printCheck   = document.getElementById('printCheck');
+        var printSection = document.getElementById('printSection');
+        var printCount   = document.getElementById('printPieceCount');
+
+        function updatePrintRows() {
+            var n = printCount ? parseInt(printCount.value) : 1;
+            for (var i = 1; i <= 5; i++) {
+                var row = document.getElementById('printRow' + i);
+                if (row) row.style.display = i <= n ? '' : 'none';
+            }
+        }
+
+        if (printCheck) {
+            printCheck.addEventListener('change', function() {
+                if (printSection) printSection.style.display = this.checked ? '' : 'none';
+            });
+        }
+        if (printCount) {
+            printCount.addEventListener('change', updatePrintRows);
+            updatePrintRows();
+        }
+
+        // ── Match show/hide ──
+        var matchCheck   = document.getElementById('matchCheck');
+        var matchSection = document.getElementById('matchSection');
+        var matchCount   = document.getElementById('matchWayCount');
+
+        function updateMatchRows() {
+            var n = matchCount ? parseInt(matchCount.value) : 2;
+            for (var i = 1; i <= 5; i++) {
+                var row = document.getElementById('matchRow' + i);
+                if (row) row.style.display = i <= n ? '' : 'none';
+            }
+        }
+
+        if (matchCheck) {
+            matchCheck.addEventListener('change', function() {
+                if (matchSection) matchSection.style.display = this.checked ? '' : 'none';
+            });
+        }
+        if (matchCount) {
+            matchCount.addEventListener('change', updateMatchRows);
+            updateMatchRows();
+        }
+    })();
+    </script>
 }
