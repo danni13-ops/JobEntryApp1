@@ -1,0 +1,22 @@
+{
+    // Disable VS Code's built-in GitHub authentication interceptor so that
+    // Git's own credential manager (Git Credential Manager, SSH keys, etc.)
+    // is used instead. This prevents VS Code from silently picking your
+    // personal Microsoft / GitHub account when you intend to push/pull using
+    // your work account.
+    "github.gitAuthentication": false,
+
+    // When the GitHub Pull Requests & Issues extension is present, these
+    // settings control PR creation defaults. Adjust them to match your
+    // team's workflow.
+    "githubPullRequests.pullRequestDescription": "template",
+    "githubPullRequests.createOnPublishBranch": "never",
+
+    // Disable GPG/SSH commit signing by default. Enable this if your work
+    // account requires signed commits (set to true and configure your key).
+    "git.enableCommitSigning": false,
+
+    // Show all remote branches so you can see everything under your work org.
+    "git.fetchOnPull": true,
+    "git.autofetch": true
+}

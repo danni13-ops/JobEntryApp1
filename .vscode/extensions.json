@@ -1,0 +1,18 @@
+{
+    "recommendations": [
+        // .NET / C# development
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+
+        // GitHub integration – supports signing in with multiple accounts
+        // (personal and work) and switching between them per-repo.
+        "github.vscode-pull-request-github",
+
+        // Remote repositories – lets you browse GitHub repos without a full
+        // local clone, and correctly respects the active signed-in account.
+        "github.remotehub",
+
+        // Live Share – useful for pair programming across org boundaries.
+        "ms-vsliveshare.vsliveshare"
+    ]
+}
