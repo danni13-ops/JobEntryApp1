@@ -1,0 +1,14 @@
+{
+  "socketPath": "\\\\.\\pipe\\mcp-acbe1d46-63be-4cb9-86a2-0f8c85099dc0.sock",
+  "scheme": "pipe",
+  "headers": {
+    "Authorization": "Nonce 21e8cdbb-66d6-4fc5-885e-f3798f2e048c"
+  },
+  "pid": 26292,
+  "ideName": "Visual Studio Code",
+  "timestamp": 1773038027198,
+  "workspaceFolders": [
+    "c:\\Users\\Danielle.Santone\\JobEntryApp1"
+  ],
+  "isTrusted": true
+}
