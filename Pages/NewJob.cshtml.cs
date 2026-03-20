@@ -1,663 +1,959 @@
-using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using JobEntryApp.Models;
+using JobEntryApp.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Mvc.Rendering; // Add this at the top if not present
+using System.ComponentModel.DataAnnotations;
 
 namespace JobEntryApp.Pages
 {
-    public class NewJobModel : PageModel, IValidatableObject
-    {
-        private readonly IConfiguration _config;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<NewJobModel> _logger;
-        private readonly IWebHostEnvironment _environment;
+	public class NewJobModel : PageModel
+	{
+		private readonly IConfiguration _config;
 
-		// Replace the old field and property definitions with these auto-properties:
+		public NewJobModel(IConfiguration config)
+		{
+			_config = config;
+		}
+
+		[BindProperty]
+		public JobInputModel Job { get; set; } = new();
+
+		public string? StatusMessage { get; set; }
+
 		public List<SelectListItem> CustomerList { get; set; } = new();
 		public List<SelectListItem> SubAccountList { get; set; } = new();
 		public List<SelectListItem> CsrList { get; set; } = new();
 		public List<SelectListItem> DataProcessingList { get; set; } = new();
 		public List<SelectListItem> SalesList { get; set; } = new();
 
-		public NewJobModel(
-            IConfiguration config,
-            IHttpClientFactory httpClientFactory,
-            ILogger<NewJobModel> logger,
-            IWebHostEnvironment environment)
+		private void LoadDropdowns()
+		{
+			CustomerList = new List<SelectListItem>
+			{
+				new SelectListItem { Text = "RWT", Value = "RWT" },
+				new SelectListItem { Text = "Edgemark", Value = "Edgemark" },
+				new SelectListItem { Text = "3 Creative", Value = "3 Creative" },
+				new SelectListItem { Text = "KT Productions", Value = "KT Productions" },
+				new SelectListItem { Text = "Mission Wired", Value = "Mission Wired" },
+				new SelectListItem { Text = "Eberle", Value = "Eberle" },
+				new SelectListItem { Text = "Milestone Marketing", Value = "Milestone Marketing" },
+				new SelectListItem { Text = "ATA", Value = "ATA" },
+				new SelectListItem { Text = "Kael", Value = "Kael" },
+				new SelectListItem { Text = "Production Solutions", Value = "Production Solutions" },
+				new SelectListItem { Text = "Merkle", Value = "Merkle" },
+				new SelectListItem { Text = "MBI", Value = "MBI" },
+				new SelectListItem { Text = "Concord Dired", Value = "Concord Dired" },
+				new SelectListItem { Text = "Duestch", Value = "Duestch" },
+				new SelectListItem { Text = "Color Source", Value = "Color Source" },
+				new SelectListItem { Text = "Tension", Value = "Tension" },
+				new SelectListItem { Text = "Suarez", Value = "Suarez" },
+				new SelectListItem { Text = "TFP", Value = "TFP" }
+			};
+
+			SubAccountList = new List<SelectListItem>
+			{
+				new SelectListItem { Text = "Humane", Value = "Humane" },
+				new SelectListItem { Text = "HSLF", Value = "HSLF" },
+				new SelectListItem { Text = "AFP", Value = "AFP" },
+				new SelectListItem { Text = "PETA", Value = "PETA" },
+				new SelectListItem { Text = "NACOP", Value = "NACOP" },
+				new SelectListItem { Text = "PPFA", Value = "PPFA" },
+				new SelectListItem { Text = "PPFA Acq", Value = "PPFA Acq" },
+				new SelectListItem { Text = "UNHCR", Value = "UNHCR" },
+				new SelectListItem { Text = "UCS", Value = "UCS" },
+				new SelectListItem { Text = "NYPL", Value = "NYPL" },
+				new SelectListItem { Text = "Madre", Value = "Madre" },
+				new SelectListItem { Text = "Mercy Corp", Value = "Mercy Corp" },
+				new SelectListItem { Text = "DNC", Value = "DNC" },
+				new SelectListItem { Text = "WWII", Value = "WWII" },
+				new SelectListItem { Text = "Obama Renewal/Foundation", Value = "Obama Renewal/Foundation" },
+				new SelectListItem { Text = "Victory Fund", Value = "Victory Fund" },
+				new SelectListItem { Text = "Medicare", Value = "Medicare" },
+				new SelectListItem { Text = "Auto", Value = "Auto" },
+				new SelectListItem { Text = "HHV", Value = "HHV" },
+				new SelectListItem { Text = "ACI", Value = "ACI" },
+				new SelectListItem { Text = "CSPF", Value = "CSPF" },
+				new SelectListItem { Text = "Million Voices", Value = "Million Voices" },
+				new SelectListItem { Text = "YC", Value = "YC" },
+				new SelectListItem { Text = "The Heritage Foundation", Value = "The Heritage Foundation" },
+				new SelectListItem { Text = "WFW", Value = "WFW" },
+				new SelectListItem { Text = "AMC", Value = "AMC" },
+				new SelectListItem { Text = "Kennedy Center", Value = "Kennedy Center" },
+				new SelectListItem { Text = "NAS", Value = "NAS" },
+				new SelectListItem { Text = "NWF", Value = "NWF" },
+				new SelectListItem { Text = "NJH", Value = "NJH" },
+				new SelectListItem { Text = "PIH", Value = "PIH" },
+				new SelectListItem { Text = "BFAS", Value = "BFAS" },
+				new SelectListItem { Text = "CVT", Value = "CVT" },
+				new SelectListItem { Text = "HWFA", Value = "HWFA" },
+				new SelectListItem { Text = "WEAVE", Value = "WEAVE" },
+				new SelectListItem { Text = "TNM", Value = "TNM" },
+				new SelectListItem { Text = "CARE", Value = "CARE" },
+				new SelectListItem { Text = "WHHA", Value = "WHHA" },
+				new SelectListItem { Text = "Green Peace", Value = "Green Peace" },
+				new SelectListItem { Text = "NMAAHC", Value = "NMAAHC" },
+				new SelectListItem { Text = "PCS", Value = "PCS" },
+				new SelectListItem { Text = "Danbury Mint", Value = "Danbury Mint" },
+				new SelectListItem { Text = "Easton Press", Value = "Easton Press" },
+				new SelectListItem { Text = "TMM", Value = "TMM" },
+				new SelectListItem { Text = "SLSN", Value = "SLSN" },
+				new SelectListItem { Text = "NKH", Value = "NKH" },
+				new SelectListItem { Text = "St. Jude", Value = "St. Jude" },
+				new SelectListItem { Text = "Thrift Book", Value = "Thrift Book" },
+				new SelectListItem { Text = "Sheriff Deputy", Value = "Sheriff Deputy" },
+				new SelectListItem { Text = "Camden County", Value = "Camden County" },
+				new SelectListItem { Text = "Geico", Value = "Geico" },
+				new SelectListItem { Text = "Gen21 Heater", Value = "Gen21 Heater" },
+				new SelectListItem { Text = "Mist Free Humidifier", Value = "Mist Free Humidifier" },
+				new SelectListItem { Text = "BioSpeed Clean SM", Value = "BioSpeed Clean SM" },
+				new SelectListItem { Text = "Total Relief Heating Pad", Value = "Total Relief Heating Pad" },
+				new SelectListItem { Text = "Oxileaf", Value = "Oxileaf" },
+				new SelectListItem { Text = "Climater", Value = "Climater" },
+				new SelectListItem { Text = "America Needs Fatima", Value = "America Needs Fatima" },
+				new SelectListItem { Text = "IFAW", Value = "IFAW" },
+				new SelectListItem { Text = "PNC", Value = "PNC" },
+				new SelectListItem { Text = "NFF", Value = "NFF" }
+			};
+
+			CsrList = new List<SelectListItem>
+			{
+				new SelectListItem { Text = "JESSE THOMAS", Value = "JESSE THOMAS" },
+				new SelectListItem { Text = "BETH WORLEY", Value = "BETH WORLEY" },
+				new SelectListItem { Text = "MONICA MANERCHIA", Value = "MONICA MANERCHIA" },
+				new SelectListItem { Text = "LYDIA BROWN", Value = "LYDIA BROWN" },
+				new SelectListItem { Text = "DANIELLE SANTONE", Value = "DANIELLE SANTONE" },
+				new SelectListItem { Text = "ERIN SULLIVAN", Value = "ERIN SULLIVAN" },
+				new SelectListItem { Text = "LINDA JOHNSON", Value = "LINDA JOHNSON" }
+			};
+
+			DataProcessingList = new List<SelectListItem>
+			{
+				new SelectListItem { Text = "CY YOST", Value = "CY YOST" },
+				new SelectListItem { Text = "LOU HIERONIMUS", Value = "LOU HIERONIMUS" },
+				new SelectListItem { Text = "JERRY WEIR", Value = "JERRY WEIR" },
+				new SelectListItem { Text = "TOM HESS", Value = "TOM HESS" },
+				new SelectListItem { Text = "KELLY WICKER", Value = "KELLY WICKER" },
+				new SelectListItem { Text = "NICK SANTONE", Value = "NICK SANTONE" },
+				new SelectListItem { Text = "LARRY BIDDLECOME", Value = "LARRY BIDDLECOME" },
+				new SelectListItem { Text = "RICHARD KIMBLE", Value = "RICHARD KIMBLE" }
+			};
+
+			SalesList = new List<SelectListItem>
+			{
+				new SelectListItem { Text = "DAN DOBBIN", Value = "DAN DOBBIN" },
+				new SelectListItem { Text = "DANIELLE SANTONE", Value = "DANIELLE SANTONE" },
+				new SelectListItem { Text = "ERIN SULLIVAN", Value = "ERIN SULLIVAN" },
+				new SelectListItem { Text = "PAT MAGEE", Value = "PAT MAGEE" },
+				new SelectListItem { Text = "BRIAN DUDLEY", Value = "BRIAN DUDLEY" }
+			};
+		}
+
+		public void OnGet()
+		{
+			LoadDropdowns();
+			Job = new JobInputModel
+			{
+				JobNumber = GetNextJobNumber(),
+                JobSpeed = JobSchedules.Standard
+				// All other fields remain blank/default on first load.
+			};
+			ModelState.Clear();
+		}
+
+		public IActionResult OnPost()
+		{
+			LoadDropdowns();
+            NormalizeScheduleFields();
+			NormalizeConditionalFields();
+			ValidateConditionalFields();
+
+			if (!ModelState.IsValid)
+				return Page();
+
+			// Calculate StartDate BEFORE saving
+			Job.StartDate = CalculateStartDate(Job);
+
+			try
+			{
+				SaveJobWithTasks(Job);
+			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError(string.Empty, $"Could not save job: {ex.Message}");
+				return Page();
+			}
+
+			StatusMessage = "Job saved successfully.";
+
+			return RedirectToPage("/Jobs/Index");
+		}
+
+        private void NormalizeScheduleFields()
         {
-            _config = config;
-            _httpClientFactory = httpClientFactory;
-            _logger = logger;
-            _environment = environment;
+            Job.JobSpeed = JobSchedules.Normalize(Job.JobSpeed);
+            Job.RushJob = JobSchedules.IsExpedited(Job.JobSpeed);
         }
 
-        [BindProperty]
-        public JobModel Job { get; set; } = new JobModel
-        {
-            Quantity = 0,
-            Status = "New"
-        };
+		private void NormalizeConditionalFields()
+		{
+			if (!Job.Print)
+			{
+				Job.PrintPieceCount = null;
+				ModelState.Remove($"{nameof(Job)}.{nameof(JobInputModel.PrintPieceCount)}");
+				for (var i = 1; i <= 4; i++)
+				{
+					ClearPrintComponent(i);
+				}
+			}
+			else
+			{
+				var printComponentCount = Math.Clamp(Job.PrintPieceCount ?? 1, 1, 4);
+				for (var i = printComponentCount + 1; i <= 4; i++)
+				{
+					ClearPrintComponent(i);
+				}
+			}
 
-        [TempData]
-        public string? StatusMessage { get; set; }
+			if (!Job.TwoWayMatch)
+			{
+				Job.MatchWayCount = null;
+				ModelState.Remove($"{nameof(Job)}.{nameof(JobInputModel.MatchWayCount)}");
+				for (var i = 1; i <= 5; i++)
+				{
+					ClearMatchComponent(i);
+				}
+			}
+			else
+			{
+				var matchComponentCount = Math.Clamp(Job.MatchWayCount ?? 2, 2, 5);
+				for (var i = matchComponentCount + 1; i <= 5; i++)
+				{
+					ClearMatchComponent(i);
+				}
+			}
+		}
 
-        public void OnGet()
-        {
-            var last = GetLastCommittedJobNumber();
-            Job.JobNumber = last + 1;
+		private void ValidateConditionalFields()
+		{
+			if (Job.Print && (!Job.PrintPieceCount.HasValue || Job.PrintPieceCount.Value < 1 || Job.PrintPieceCount.Value > 4))
+			{
+				ModelState.AddModelError($"{nameof(Job)}.{nameof(JobInputModel.PrintPieceCount)}", "How many components must be between 1 and 4.");
+			}
 
-            if (!Job.MatchWayCount.HasValue)
-                Job.MatchWayCount = 2;
+			if (Job.Print)
+			{
+				var printComponentCount = Math.Clamp(Job.PrintPieceCount ?? 1, 1, 4);
+				for (var i = 1; i <= printComponentCount; i++)
+				{
+					ValidatePrintComponent(i);
+				}
+			}
 
-            if (!Job.PrintPieceCount.HasValue)
-                Job.PrintPieceCount = 1;
-        }
+			if (Job.TwoWayMatch && (!Job.MatchWayCount.HasValue || Job.MatchWayCount.Value < 2 || Job.MatchWayCount.Value > 5))
+			{
+				ModelState.AddModelError($"{nameof(Job)}.{nameof(JobInputModel.MatchWayCount)}", "How many way match must be between 2 and 5.");
+			}
 
-        public async Task<IActionResult> OnPost(string action)
-        {
-            if (!TryValidateModel(Job, nameof(Job)))
-            {
-                var last = GetLastCommittedJobNumber();
-                Job.JobNumber = last + 1;
+			if (Job.TwoWayMatch)
+			{
+				var matchComponentCount = Math.Clamp(Job.MatchWayCount ?? 2, 2, 5);
+				for (var i = 1; i <= matchComponentCount; i++)
+				{
+					ValidateMatchComponent(i);
+				}
+			}
+		}
 
-                if (!Job.MatchWayCount.HasValue)
-                    Job.MatchWayCount = 2;
-                if (!Job.PrintPieceCount.HasValue)
-                    Job.PrintPieceCount = 1;
+		private void ValidatePrintComponent(int index)
+		{
+			var (name, size) = GetPrintComponent(index);
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				ModelState.AddModelError(GetPrintComponentNameKey(index), $"Component {index} name is required.");
+			}
 
-                return Page();
-            }
+			if (string.IsNullOrWhiteSpace(size))
+			{
+				ModelState.AddModelError(GetPrintComponentSizeKey(index), $"Component {index} size is required.");
+			}
+		}
 
-            var lastCommitted = GetLastCommittedJobNumber();
-            Job.JobNumber = lastCommitted + 1;
+		private void ValidateMatchComponent(int index)
+		{
+			var (name, facingDirection) = GetMatchComponent(index);
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				ModelState.AddModelError(GetMatchComponentNameKey(index), $"Matching component {index} name is required.");
+			}
 
-            try
-            {
-                var tasksCreated = SaveJobToDatabase(Job);
-                StatusMessage = tasksCreated > 0
-                    ? $"Job {Job.JobNumber} saved successfully with {tasksCreated} tasks created."
-                    : $"Job {Job.JobNumber} saved successfully. Tasks were skipped because Mail Date is before today or missing.";
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, "Error saving job: " + ex.Message);
+			if (string.IsNullOrWhiteSpace(facingDirection))
+			{
+				ModelState.AddModelError(GetMatchComponentFacingDirectionKey(index), $"Matching component {index} facing direction is required.");
+			}
+		}
 
-                var last = GetLastCommittedJobNumber();
-                Job.JobNumber = last + 1;
-                if (!Job.MatchWayCount.HasValue)
-                    Job.MatchWayCount = 2;
-                if (!Job.PrintPieceCount.HasValue)
-                    Job.PrintPieceCount = 1;
+		private void ClearPrintComponent(int index)
+		{
+			SetPrintComponent(index, null, null);
+			ModelState.Remove(GetPrintComponentNameKey(index));
+			ModelState.Remove(GetPrintComponentSizeKey(index));
+		}
 
-                return Page();
-            }
+		private void ClearMatchComponent(int index)
+		{
+			SetMatchComponent(index, null, null);
+			ModelState.Remove(GetMatchComponentNameKey(index));
+			ModelState.Remove(GetMatchComponentFacingDirectionKey(index));
+		}
 
-            if (action == "createAndHome")
-            {
-                return RedirectToPage("/Index");
-            }
+		private (string? Name, string? Size) GetPrintComponent(int index)
+			=> index switch
+			{
+				1 => (Job.PrintComponent1Name, Job.PrintComponent1FacingDirection),
+				2 => (Job.PrintComponent2Name, Job.PrintComponent2FacingDirection),
+				3 => (Job.PrintComponent3Name, Job.PrintComponent3FacingDirection),
+				4 => (Job.PrintComponent4Name, Job.PrintComponent4FacingDirection),
+				_ => (null, null)
+			};
 
-            return RedirectToPage("/NewJob");
-        }
+		private void SetPrintComponent(int index, string? name, string? size)
+		{
+			switch (index)
+			{
+				case 1:
+					Job.PrintComponent1Name = name;
+					Job.PrintComponent1FacingDirection = size;
+					break;
+				case 2:
+					Job.PrintComponent2Name = name;
+					Job.PrintComponent2FacingDirection = size;
+					break;
+				case 3:
+					Job.PrintComponent3Name = name;
+					Job.PrintComponent3FacingDirection = size;
+					break;
+				case 4:
+					Job.PrintComponent4Name = name;
+					Job.PrintComponent4FacingDirection = size;
+					break;
+			}
+		}
 
-        private void LoadSales()
-        {
-            var cs = _config.GetConnectionString("JobEntryDb");
-            using var conn = new SqlConnection(cs);
-            conn.Open();
+		private (string? Name, string? FacingDirection) GetMatchComponent(int index)
+			=> index switch
+			{
+				1 => (Job.MatchComponent1, Job.MatchComponent1FacingDirection),
+				2 => (Job.MatchComponent2, Job.MatchComponent2FacingDirection),
+				3 => (Job.MatchComponent3, Job.MatchComponent3FacingDirection),
+				4 => (Job.MatchComponent4, Job.MatchComponent4FacingDirection),
+				5 => (Job.MatchComponent5, Job.MatchComponent5FacingDirection),
+				_ => (null, null)
+			};
 
-            using var cmd = new SqlCommand("SELECT Name FROM Sales ORDER BY Name", conn);
-            using var reader = cmd.ExecuteReader();
+		private void SetMatchComponent(int index, string? name, string? facingDirection)
+		{
+			switch (index)
+			{
+				case 1:
+					Job.MatchComponent1 = name;
+					Job.MatchComponent1FacingDirection = facingDirection;
+					break;
+				case 2:
+					Job.MatchComponent2 = name;
+					Job.MatchComponent2FacingDirection = facingDirection;
+					break;
+				case 3:
+					Job.MatchComponent3 = name;
+					Job.MatchComponent3FacingDirection = facingDirection;
+					break;
+				case 4:
+					Job.MatchComponent4 = name;
+					Job.MatchComponent4FacingDirection = facingDirection;
+					break;
+				case 5:
+					Job.MatchComponent5 = name;
+					Job.MatchComponent5FacingDirection = facingDirection;
+					break;
+			}
+		}
 
-            SalesList.Clear();
-            while (reader.Read())
-            {
-                SalesList.Add(new SelectListItem
+		private static string GetPrintComponentNameKey(int index)
+			=> $"{nameof(Job)}.{index switch
+			{
+				1 => nameof(JobInputModel.PrintComponent1Name),
+				2 => nameof(JobInputModel.PrintComponent2Name),
+				3 => nameof(JobInputModel.PrintComponent3Name),
+				4 => nameof(JobInputModel.PrintComponent4Name),
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			}}";
+
+		private static string GetPrintComponentSizeKey(int index)
+			=> $"{nameof(Job)}.{index switch
+			{
+				1 => nameof(JobInputModel.PrintComponent1FacingDirection),
+				2 => nameof(JobInputModel.PrintComponent2FacingDirection),
+				3 => nameof(JobInputModel.PrintComponent3FacingDirection),
+				4 => nameof(JobInputModel.PrintComponent4FacingDirection),
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			}}";
+
+		private static string GetMatchComponentNameKey(int index)
+			=> $"{nameof(Job)}.{index switch
+			{
+				1 => nameof(JobInputModel.MatchComponent1),
+				2 => nameof(JobInputModel.MatchComponent2),
+				3 => nameof(JobInputModel.MatchComponent3),
+				4 => nameof(JobInputModel.MatchComponent4),
+				5 => nameof(JobInputModel.MatchComponent5),
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			}}";
+
+		private static string GetMatchComponentFacingDirectionKey(int index)
+			=> $"{nameof(Job)}.{index switch
+			{
+				1 => nameof(JobInputModel.MatchComponent1FacingDirection),
+				2 => nameof(JobInputModel.MatchComponent2FacingDirection),
+				3 => nameof(JobInputModel.MatchComponent3FacingDirection),
+				4 => nameof(JobInputModel.MatchComponent4FacingDirection),
+				5 => nameof(JobInputModel.MatchComponent5FacingDirection),
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			}}";
+
+		private int GetNextJobNumber()
+		{
+			var cs = _config.GetConnectionString("JobEntryDb");
+
+			if (string.IsNullOrWhiteSpace(cs))
+				return 1;
+
+			using var conn = new SqlConnection(cs);
+			conn.Open();
+
+			using var cmd = conn.CreateCommand();
+			cmd.CommandText = "SELECT ISNULL(MAX(JobNumber),0) + 1 FROM Jobs";
+
+			var result = cmd.ExecuteScalar();
+
+			return result != null ? Convert.ToInt32(result) : 1;
+		}
+
+		private void SaveJobWithTasks(JobInputModel job)
+		{
+			var cs = _config.GetConnectionString("JobEntryDb");
+            var jobFolderPath = GetJobFoldersBasePath();
+            string? createdJobFolder = null;
+
+			using var conn = new SqlConnection(cs);
+			conn.Open();
+			using var tx = conn.BeginTransaction();
+
+			try
+			{
+				SaveJob(conn, tx, job);
+                UpsertMailChart(conn, tx, job);
+				GenerateTasks(conn, tx, job);
+                createdJobFolder = JobFolderService.EnsureJobFolderTree(jobFolderPath, job.Customer, job.SubAccount, job.JobNumber, job.JobName);
+				tx.Commit();
+			}
+			catch
+			{
+				tx.Rollback();
+                if (!string.IsNullOrWhiteSpace(createdJobFolder))
                 {
-                    Value = reader.GetString(0),
-                    Text = reader.GetString(0)
-                });
-            }
-        }
+                    try
+                    {
+                        Directory.Delete(createdJobFolder, recursive: true);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup failures and preserve the original error.
+                    }
+                }
+				throw;
+			}
+		}
 
-        private async Task CreateJobFoldersAsync(int jobNumber)
+        private string GetJobFoldersBasePath()
+            => _config["JobFoldersBasePath"]?.Trim()
+                ?? @"P:\Danielle\JOB FOLDERS";
+
+		private static void SaveJob(SqlConnection conn, SqlTransaction tx, JobInputModel job)
+		{
+			using var cmd = conn.CreateCommand();
+			cmd.Transaction = tx;
+
+			cmd.CommandText = @"
+                INSERT INTO dbo.Jobs
+                (
+                    JobNumber,
+                    JobName,
+                    Customer,
+                    SubAccount,
+                    Quantity,
+                    StartDate,
+                    MailDate,
+                    PostageClass,
+                    PostageStyle,
+                    CSR,
+                    DataProcessing,
+                    Sales,
+                    RushJob,
+                    JobSpeed,
+                    [Print],
+                    PrintPieceCount,
+                    PrintComponent1Name,
+                    PrintComponent1FacingDirection,
+                    PrintComponent2Name,
+                    PrintComponent2FacingDirection,
+                    PrintComponent3Name,
+                    PrintComponent3FacingDirection,
+                    PrintComponent4Name,
+                    PrintComponent4FacingDirection,
+                    TwoWayMatch,
+                    MatchWayCount,
+                    MatchComponent1,
+                    MatchComponent1FacingDirection,
+                    MatchComponent2,
+                    MatchComponent2FacingDirection,
+                    MatchComponent3,
+                    MatchComponent3FacingDirection,
+                    MatchComponent4,
+                    MatchComponent4FacingDirection,
+                    MatchComponent5,
+                    MatchComponent5FacingDirection,
+                    Status
+                )
+                VALUES
+                (
+                    @JobNumber,
+                    @JobName,
+                    @Customer,
+                    @SubAccount,
+                    @Quantity,
+                    @StartDate,
+                    @MailDate,
+                    @PostageClass,
+                    @PostageStyle,
+                    @Csr,
+                    @DataProcessing,
+                    @Sales,
+                    @RushJob,
+                    @JobSpeed,
+                    @Print,
+                    @PrintPieceCount,
+                    @PrintComponent1Name,
+                    @PrintComponent1FacingDirection,
+                    @PrintComponent2Name,
+                    @PrintComponent2FacingDirection,
+                    @PrintComponent3Name,
+                    @PrintComponent3FacingDirection,
+                    @PrintComponent4Name,
+                    @PrintComponent4FacingDirection,
+                    @TwoWayMatch,
+                    @MatchWayCount,
+                    @MatchComponent1,
+                    @MatchComponent1FacingDirection,
+                    @MatchComponent2,
+                    @MatchComponent2FacingDirection,
+                    @MatchComponent3,
+                    @MatchComponent3FacingDirection,
+                    @MatchComponent4,
+                    @MatchComponent4FacingDirection,
+                    @MatchComponent5,
+                    @MatchComponent5FacingDirection,
+                    @Status
+                )";
+
+			cmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
+			cmd.Parameters.AddWithValue("@JobName", job.JobName ?? "");
+			cmd.Parameters.AddWithValue("@Customer", job.Customer ?? "");
+			cmd.Parameters.AddWithValue("@SubAccount", job.SubAccount ?? "");
+			cmd.Parameters.AddWithValue("@Quantity", (object?)job.Quantity ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@StartDate", job.StartDate ?? (object)DBNull.Value);
+			cmd.Parameters.AddWithValue("@MailDate", job.MailDate ?? (object)DBNull.Value);
+			cmd.Parameters.AddWithValue("@PostageClass", job.PostageClass ?? "");
+			cmd.Parameters.AddWithValue("@PostageStyle", job.PostageStyle ?? "");
+			cmd.Parameters.AddWithValue("@Csr", job.Csr ?? "");
+			cmd.Parameters.AddWithValue("@DataProcessing", job.DataProcessing ?? "");
+			cmd.Parameters.AddWithValue("@Sales", job.Sales ?? "");
+            cmd.Parameters.AddWithValue("@RushJob", JobSchedules.IsExpedited(job.JobSpeed));
+            cmd.Parameters.AddWithValue("@JobSpeed", JobSchedules.Normalize(job.JobSpeed));
+			cmd.Parameters.AddWithValue("@Print", job.Print);
+			cmd.Parameters.AddWithValue("@PrintPieceCount", (object?)job.PrintPieceCount ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent1Name", (object?)job.PrintComponent1Name ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent1FacingDirection", (object?)job.PrintComponent1FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent2Name", (object?)job.PrintComponent2Name ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent2FacingDirection", (object?)job.PrintComponent2FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent3Name", (object?)job.PrintComponent3Name ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent3FacingDirection", (object?)job.PrintComponent3FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent4Name", (object?)job.PrintComponent4Name ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@PrintComponent4FacingDirection", (object?)job.PrintComponent4FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@TwoWayMatch", job.TwoWayMatch);
+			cmd.Parameters.AddWithValue("@MatchWayCount", (object?)job.MatchWayCount ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent1", (object?)job.MatchComponent1 ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent1FacingDirection", (object?)job.MatchComponent1FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent2", (object?)job.MatchComponent2 ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent2FacingDirection", (object?)job.MatchComponent2FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent3", (object?)job.MatchComponent3 ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent3FacingDirection", (object?)job.MatchComponent3FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent4", (object?)job.MatchComponent4 ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent4FacingDirection", (object?)job.MatchComponent4FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent5", (object?)job.MatchComponent5 ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@MatchComponent5FacingDirection", (object?)job.MatchComponent5FacingDirection ?? DBNull.Value);
+			cmd.Parameters.AddWithValue("@Status", "New");
+
+			cmd.ExecuteNonQuery();
+		}
+
+        private static void UpsertMailChart(SqlConnection conn, SqlTransaction tx, JobInputModel job)
         {
-            var googleParentFolderId = _config["GoogleDrive:ParentFolderId"];
-            if (!string.IsNullOrWhiteSpace(googleParentFolderId))
-            {
-                await CreateGoogleDriveFoldersAsync(jobNumber, googleParentFolderId);
-                return;
-            }
-
-            var basePath = _config["JobFoldersBasePath"];
-            if (string.IsNullOrWhiteSpace(basePath)) return;
-
-            var subfolders = new[] { "Art", "Control Cards", "Data", "Reports", "Postal", "Signoffs", "PO & Instructions" };
-            var jobPath = Path.Combine(basePath, jobNumber.ToString());
-            Directory.CreateDirectory(jobPath);
-            foreach (var sub in subfolders)
-            {
-                Directory.CreateDirectory(Path.Combine(jobPath, sub));
-            }
-        }
-
-        private async Task CreateGoogleDriveFoldersAsync(int jobNumber, string parentFolderId)
-        {
-            var serviceAccountEmail = _config["GoogleDrive:ServiceAccountEmail"];
-            var privateKeyPem = _config["GoogleDrive:PrivateKey"];
-            TryLoadGoogleCredentialsFromJsonFile(ref serviceAccountEmail, ref privateKeyPem);
-
-            if (string.IsNullOrWhiteSpace(serviceAccountEmail) || string.IsNullOrWhiteSpace(privateKeyPem))
-            {
-                _logger.LogWarning("Google Drive folder creation is configured, but ServiceAccountEmail/PrivateKey is missing.");
-                return;
-            }
-
-            var accessToken = await GetGoogleAccessTokenAsync(serviceAccountEmail, privateKeyPem);
-            if (string.IsNullOrWhiteSpace(accessToken))
-            {
-                _logger.LogWarning("Could not obtain Google Drive access token.");
-                return;
-            }
-
-            var http = _httpClientFactory.CreateClient();
-            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-
-            var jobFolderId = await CreateDriveFolderAsync(http, jobNumber.ToString(), parentFolderId);
-            var subfolders = new[] { "Art", "Control Cards", "Data", "Reports", "Postal", "Signoffs", "PO & Instructions" };
-
-            foreach (var subfolder in subfolders)
-            {
-                await CreateDriveFolderAsync(http, subfolder, jobFolderId);
-            }
-        }
-
-        private void TryLoadGoogleCredentialsFromJsonFile(ref string? serviceAccountEmail, ref string? privateKeyPem)
-        {
-            var credentialsPath = _config["GoogleDrive:CredentialsJsonPath"];
-            if (string.IsNullOrWhiteSpace(credentialsPath))
+            var mailChartTable = DatabaseSchema.FindTable(conn, tx, "MailChart", "mailchart");
+            if (mailChartTable is null)
             {
                 return;
             }
 
-            var resolvedPath = Path.IsPathRooted(credentialsPath)
-                ? credentialsPath
-                : Path.Combine(_environment.ContentRootPath, credentialsPath);
-
-            if (!System.IO.File.Exists(resolvedPath))
+            var columns = DatabaseSchema.GetColumns(conn, mailChartTable, tx);
+            var jobNumberColumn = DatabaseSchema.FindColumn(columns, "JobNumber", "job_number");
+            if (jobNumberColumn is null)
             {
-                _logger.LogWarning("Google credentials JSON file not found at {Path}.", resolvedPath);
                 return;
             }
 
-            try
-            {
-                var json = System.IO.File.ReadAllText(resolvedPath);
-                using var doc = JsonDocument.Parse(json);
+            var kitColumn = DatabaseSchema.FindColumn(columns, "Kit", "kit");
+            var customerColumn = DatabaseSchema.FindColumn(columns, "Customer", "customer");
+            var jobNameColumn = DatabaseSchema.FindColumn(columns, "JobName", "job_name");
+            var classColumn = DatabaseSchema.FindColumn(columns, "Class", "class");
+            var aeColumn = DatabaseSchema.FindColumn(columns, "AE", "ae");
+            var mailDateColumn = DatabaseSchema.FindColumn(columns, "MailDate", "mail_date");
+            var quantityColumn = DatabaseSchema.FindColumn(columns, "Quantity", "quantity");
+            var styleTruckColumn = DatabaseSchema.FindColumn(columns, "StyleTruck", "style_truck");
+            var comminglerColumn = DatabaseSchema.FindColumn(columns, "Commingler", "commingler");
 
-                if (doc.RootElement.TryGetProperty("client_email", out var emailEl))
+            var keyWhere = new List<string> { $"[{jobNumberColumn}] = @LookupJobNumber" };
+
+            using var existsCmd = conn.CreateCommand();
+            existsCmd.Transaction = tx;
+            existsCmd.Parameters.AddWithValue("@LookupJobNumber", job.JobNumber);
+
+            if (!string.IsNullOrWhiteSpace(kitColumn))
+            {
+                keyWhere.Add($"[{kitColumn}] = @LookupKit");
+                existsCmd.Parameters.AddWithValue("@LookupKit", 0);
+            }
+
+            existsCmd.CommandText = $@"
+                SELECT COUNT(*)
+                FROM {mailChartTable.SqlName}
+                WHERE {string.Join(" AND ", keyWhere)};";
+
+            var exists = Convert.ToInt32(existsCmd.ExecuteScalar()) > 0;
+
+            var values = new List<(string Column, string Parameter, object Value)>();
+            AddInsertValue(values, jobNumberColumn, "@JobNumber", job.JobNumber);
+            AddInsertValue(values, kitColumn, "@Kit", 0);
+            AddInsertValue(values, customerColumn, "@Customer", job.Customer ?? string.Empty);
+            AddInsertValue(values, jobNameColumn, "@JobName", job.JobName ?? string.Empty);
+            AddInsertValue(values, classColumn, "@Class", job.PostageClass ?? string.Empty);
+            AddInsertValue(values, aeColumn, "@AE", job.Csr ?? string.Empty);
+            AddInsertValue(values, mailDateColumn, job.MailDate.HasValue ? "@MailDate" : "@MailDateNull", job.MailDate.HasValue ? job.MailDate.Value : DBNull.Value);
+            AddInsertValue(values, quantityColumn, "@Quantity", job.Quantity ?? 0);
+            AddInsertValue(values, styleTruckColumn, "@StyleTruck", string.Empty);
+            AddInsertValue(values, comminglerColumn, "@Commingler", string.Empty);
+
+            if (exists)
+            {
+                var updateValues = values
+                    .Where(v => !string.Equals(v.Column, jobNumberColumn, StringComparison.OrdinalIgnoreCase)
+                        && !string.Equals(v.Column, kitColumn, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (updateValues.Count == 0)
                 {
-                    serviceAccountEmail = emailEl.GetString();
+                    return;
                 }
 
-                if (doc.RootElement.TryGetProperty("private_key", out var keyEl))
+                using var updateCmd = conn.CreateCommand();
+                updateCmd.Transaction = tx;
+                updateCmd.CommandText = $@"
+                    UPDATE {mailChartTable.SqlName}
+                    SET {string.Join(", ", updateValues.Select(v => $"[{v.Column}] = {v.Parameter}"))}
+                    WHERE {string.Join(" AND ", keyWhere)};";
+
+                updateCmd.Parameters.AddWithValue("@LookupJobNumber", job.JobNumber);
+                if (!string.IsNullOrWhiteSpace(kitColumn))
                 {
-                    privateKeyPem = keyEl.GetString();
+                    updateCmd.Parameters.AddWithValue("@LookupKit", 0);
                 }
+
+                foreach (var value in updateValues)
+                {
+                    updateCmd.Parameters.AddWithValue(value.Parameter, value.Value);
+                }
+
+                updateCmd.ExecuteNonQuery();
+                return;
             }
-            catch (Exception ex)
+
+            using var insertCmd = conn.CreateCommand();
+            insertCmd.Transaction = tx;
+            insertCmd.CommandText = $@"
+                INSERT INTO {mailChartTable.SqlName}
+                (
+                    {string.Join(", ", values.Select(v => $"[{v.Column}]"))}
+                )
+                VALUES
+                (
+                    {string.Join(", ", values.Select(v => v.Parameter))}
+                );";
+
+            foreach (var value in values)
             {
-                _logger.LogWarning(ex, "Unable to parse Google credentials JSON file.");
+                insertCmd.Parameters.AddWithValue(value.Parameter, value.Value);
+            }
+
+            insertCmd.ExecuteNonQuery();
+        }
+
+		public class JobInputModel
+		{
+			public int JobNumber { get; set; }
+
+			public string? Customer { get; set; }
+
+			public string? JobName { get; set; }
+
+			public string? SubAccount { get; set; }
+
+			public int? Quantity { get; set; }
+
+			public DateTime? StartDate { get; set; }
+
+			public DateTime? MailDate { get; set; }
+
+			public string? PostageClass { get; set; }
+
+			public string? PostageStyle { get; set; }
+
+			public string? Csr { get; set; }
+
+			public string? DataProcessing { get; set; }
+
+			public string? Sales { get; set; }
+
+			public bool RushJob { get; set; }
+
+			public bool Print { get; set; }
+
+			public int? PrintPieceCount { get; set; }
+
+			public string? PrintComponent1Name { get; set; }
+
+			public string? PrintComponent1FacingDirection { get; set; }
+
+			public string? PrintComponent2Name { get; set; }
+
+			public string? PrintComponent2FacingDirection { get; set; }
+
+			public string? PrintComponent3Name { get; set; }
+
+			public string? PrintComponent3FacingDirection { get; set; }
+
+			public string? PrintComponent4Name { get; set; }
+
+			public string? PrintComponent4FacingDirection { get; set; }
+
+			public bool TwoWayMatch { get; set; }
+
+			public int? MatchWayCount { get; set; }
+
+			public string? MatchComponent1 { get; set; }
+
+			public string? MatchComponent1FacingDirection { get; set; }
+
+			public string? MatchComponent2 { get; set; }
+
+			public string? MatchComponent2FacingDirection { get; set; }
+
+			public string? MatchComponent3 { get; set; }
+
+			public string? MatchComponent3FacingDirection { get; set; }
+
+			public string? MatchComponent4 { get; set; }
+
+			public string? MatchComponent4FacingDirection { get; set; }
+
+			public string? MatchComponent5 { get; set; }
+
+			public string? MatchComponent5FacingDirection { get; set; }
+
+            [Display(Name = "Schedule")]
+			public string JobSpeed { get; set; } = JobSchedules.Standard;
+		}
+
+		private DateTime CalculateStartDate(JobInputModel job)
+		{
+			// If user provided StartDate, keep it as the explicit override.
+			if (job.StartDate.HasValue)
+				return job.StartDate.Value;
+
+			int daysBack = JobSchedules.GetBusinessDaysBack(job.JobSpeed);
+
+			// Fallback if MailDate missing (safety)
+			if (!job.MailDate.HasValue)
+				return DateTime.Today;
+
+			return BusinessDaysBack(job.MailDate.Value, daysBack);
+		}
+
+		private DateTime BusinessDaysBack(DateTime date, int days)
+		{
+			int addedDays = 0;
+
+			while (addedDays < days)
+			{
+				date = date.AddDays(-1);
+
+				if (date.DayOfWeek != DayOfWeek.Saturday &&
+					date.DayOfWeek != DayOfWeek.Sunday)
+				{
+					addedDays++;
+				}
+			}
+
+			return date;
+		}
+
+        private static void GenerateTasks(SqlConnection conn, SqlTransaction tx, JobInputModel job)
+        {
+            var tasksTable = DatabaseSchema.FindTable(conn, tx, "Tasks", "tasks")
+                ?? throw new InvalidOperationException("Could not find a Tasks table.");
+            var taskColumns = DatabaseSchema.GetColumns(conn, tasksTable, tx);
+            var jobNumberColumn = DatabaseSchema.FindColumn(taskColumns, "JobNumber", "job_number");
+            var taskNumberColumn = DatabaseSchema.FindColumn(taskColumns, "TaskNumber", "task_number");
+            var taskNameColumn = DatabaseSchema.FindColumn(taskColumns, "TaskName", "task_name");
+            var stageColumn = DatabaseSchema.FindColumn(taskColumns, "Stage", "stage");
+            var assignedToColumn = DatabaseSchema.FindColumn(taskColumns, "AssignedTo", "assigned_to");
+            var assignee2Column = DatabaseSchema.FindColumn(taskColumns, "Assignee2", "assigned_to_2");
+            var dueDateColumn = DatabaseSchema.FindColumn(taskColumns, "DueDate", "due_date");
+            var statusColumn = DatabaseSchema.FindColumn(taskColumns, "Status", "status");
+            var offsetFromStartDateColumn = DatabaseSchema.FindColumn(taskColumns, "OffsetFromStartDate", "offset_from_start_date");
+            var offsetFromMailDateColumn = DatabaseSchema.FindColumn(taskColumns, "OffsetFromMailDate", "offset_from_mail_date");
+            var createdAtColumn = DatabaseSchema.FindColumn(taskColumns, "CreatedAt", "created_at");
+
+            if (jobNumberColumn is null || taskNameColumn is null)
+            {
+                throw new InvalidOperationException("The Tasks table is missing required job/task columns.");
+            }
+
+            var templates = TaskTemplateRepository.Load(conn, tx).ToList();
+
+            foreach (var t in templates)
+            {
+                var dueDate = ResolveDueDate(t, job);
+                var offsetFromStartDate = string.Equals(t.AnchorType, "MailDate", StringComparison.OrdinalIgnoreCase)
+                    ? (object)DBNull.Value
+                    : t.DaysOffset;
+                var offsetFromMailDate = string.Equals(t.AnchorType, "MailDate", StringComparison.OrdinalIgnoreCase)
+                    ? t.DaysOffset
+                    : (object)DBNull.Value;
+
+                var insertValues = new List<(string Column, string Parameter, object Value)>();
+                AddInsertValue(insertValues, jobNumberColumn, "@JobNumber", job.JobNumber);
+                AddInsertValue(insertValues, taskNumberColumn, "@TaskNumber", t.SortOrder);
+                AddInsertValue(insertValues, taskNameColumn, "@TaskName", t.TaskName);
+                AddInsertValue(insertValues, stageColumn, "@Stage", string.IsNullOrWhiteSpace(t.Stage) ? DBNull.Value : t.Stage);
+                AddInsertValue(insertValues, assignedToColumn, "@AssignedTo", (object?)ResolveAssignedTo(t.AssignedTo, job) ?? DBNull.Value);
+                AddInsertValue(insertValues, assignee2Column, "@AssignedTo2", (object?)ResolveAssignedTo(t.AssignedTo2, job) ?? DBNull.Value);
+                AddInsertValue(insertValues, dueDateColumn, "@DueDate", dueDate.HasValue ? dueDate.Value : DBNull.Value);
+                AddInsertValue(insertValues, offsetFromStartDateColumn, "@OffsetFromStartDate", offsetFromStartDate);
+                AddInsertValue(insertValues, offsetFromMailDateColumn, "@OffsetFromMailDate", offsetFromMailDate);
+                AddInsertValue(insertValues, statusColumn, "@Status", "Scheduled");
+                AddInsertValue(insertValues, createdAtColumn, "@CreatedAt", DateTime.UtcNow);
+
+                using var insert = conn.CreateCommand();
+                insert.Transaction = tx;
+                insert.CommandText = $@"
+                    INSERT INTO {tasksTable.SqlName}
+                    (
+                        {string.Join(", ", insertValues.Select(v => $"[{v.Column}]"))}
+                    )
+                    VALUES
+                    (
+                        {string.Join(", ", insertValues.Select(v => v.Parameter))}
+                    )";
+
+                foreach (var value in insertValues)
+                {
+                    insert.Parameters.AddWithValue(value.Parameter, value.Value);
+                }
+
+                insert.ExecuteNonQuery();
             }
         }
 
-        private async Task<string?> GetGoogleAccessTokenAsync(string serviceAccountEmail, string privateKeyPem)
+        private static void AddInsertValue(List<(string Column, string Parameter, object Value)> values, string? column, string parameter, object value)
         {
-            const string tokenEndpoint = "https://oauth2.googleapis.com/token";
-            var now = DateTimeOffset.UtcNow;
-
-            var header = Base64UrlEncode(Encoding.UTF8.GetBytes("{\"alg\":\"RS256\",\"typ\":\"JWT\"}"));
-            var payloadObj = new
+            if (!string.IsNullOrWhiteSpace(column))
             {
-                iss = serviceAccountEmail,
-                scope = "https://www.googleapis.com/auth/drive",
-                aud = tokenEndpoint,
-                iat = now.ToUnixTimeSeconds(),
-                exp = now.AddMinutes(55).ToUnixTimeSeconds()
-            };
-            var payload = Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payloadObj)));
-            var unsignedJwt = $"{header}.{payload}";
+                values.Add((column, parameter, value));
+            }
+        }
 
-            var normalizedPem = privateKeyPem.Replace("\\n", "\n");
-            using var rsa = RSA.Create();
-            rsa.ImportFromPem(normalizedPem.ToCharArray());
-            var signature = rsa.SignData(Encoding.UTF8.GetBytes(unsignedJwt), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            var signedJwt = $"{unsignedJwt}.{Base64UrlEncode(signature)}";
+        private static DateTime BusinessDaysFrom(DateTime date, int offset)
+        {
+            int direction = offset >= 0 ? 1 : -1;
+            int days = Math.Abs(offset);
 
-            using var client = _httpClientFactory.CreateClient();
-            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            int added = 0;
+
+            while (added < days)
             {
-                ["grant_type"] = "urn:ietf:params:oauth:grant-type:jwt-bearer",
-                ["assertion"] = signedJwt
-            });
+                date = date.AddDays(direction);
 
-            using var response = await client.PostAsync(tokenEndpoint, content);
-            var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
+                if (date.DayOfWeek != DayOfWeek.Saturday &&
+                    date.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    added++;
+                }
+            }
+
+            return date;
+        }
+
+        private static DateTime? ResolveDueDate(TaskTemplateDefault template, JobInputModel job)
+        {
+            if (string.Equals(template.AnchorType, "MailDate", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Google token endpoint error: {StatusCode} {Body}", response.StatusCode, body);
+                if (job.MailDate.HasValue)
+                {
+                    return BusinessDaysFrom(job.MailDate.Value, template.DaysOffset);
+                }
+
                 return null;
             }
 
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("access_token", out var tokenElement))
+            if (job.StartDate.HasValue)
             {
-                return tokenElement.GetString();
+                return BusinessDaysFrom(job.StartDate.Value, template.DaysOffset);
+            }
+
+            if (job.MailDate.HasValue)
+            {
+                return BusinessDaysFrom(job.MailDate.Value, template.DaysOffset);
             }
 
             return null;
         }
 
-        private static async Task<string> CreateDriveFolderAsync(HttpClient http, string folderName, string parentFolderId)
-        {
-            var payload = new
+        private static string? ResolveAssignedTo(string? templateAssignee, JobInputModel job)
+            => templateAssignee switch
             {
-                name = folderName,
-                mimeType = "application/vnd.google-apps.folder",
-                parents = new[] { parentFolderId }
+                "CSR" => string.IsNullOrWhiteSpace(job.Csr) ? null : job.Csr,
+                "DP" => string.IsNullOrWhiteSpace(job.DataProcessing) ? null : job.DataProcessing,
+                null => null,
+                _ => templateAssignee
             };
-
-            using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            using var response = await http.PostAsync("https://www.googleapis.com/drive/v3/files?fields=id&supportsAllDrives=true", content);
-            var responseBody = await response.Content.ReadAsStringAsync();
-            response.EnsureSuccessStatusCode();
-
-            using var doc = JsonDocument.Parse(responseBody);
-            return doc.RootElement.GetProperty("id").GetString() ?? throw new InvalidOperationException("Google Drive did not return an id.");
-        }
-
-        private static string Base64UrlEncode(byte[] input)
-        {
-            return Convert.ToBase64String(input)
-                .TrimEnd('=')
-                .Replace('+', '-')
-                .Replace('/', '_');
-        }
-
-        private int GetLastCommittedJobNumber()
-        {
-            var cs = _config.GetConnectionString("JobEntryDb")
-                ?? throw new InvalidOperationException("Missing connection string 'JobEntryDb'.");
-
-            using var conn = new SqlConnection(cs);
-            using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT ISNULL(MAX(JobNumber), 43352) FROM dbo.Jobs;";
-
-            conn.Open();
-            var result = cmd.ExecuteScalar();
-            return Convert.ToInt32(result);
-        }
-
-        private int SaveJobToDatabase(JobModel job)
-        {
-            var cs = _config.GetConnectionString("JobEntryDb")
-                ?? throw new InvalidOperationException("Missing connection string 'JobEntryDb'.");
-
-            using var conn = new SqlConnection(cs);
-            conn.Open();
-
-            using SqlTransaction tx = conn.BeginTransaction();
-            var tasksCreated = 0;
-
-            try
-            {
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.Transaction = tx;
-
-                    cmd.CommandText = @"INSERT INTO dbo.Jobs (
-                        JobNumber, JobName, MailDate, Customer, SubAccount, Csr, DataProcessing,
-                        Quantity, PostageStyle, PostageClass, Sales, StartDate, Status,
-                        [Print], TwoWayMatch,
-                        MatchWayCount, MatchComponent1, MatchComponent2, MatchComponent3, MatchComponent4, MatchComponent5,
-                        PrintPieceCount, PrintComponent1Name, PrintComponent1FacingDirection,
-                        PrintComponent2Name, PrintComponent2FacingDirection,
-                        PrintComponent3Name, PrintComponent3FacingDirection,
-                        PrintComponent4Name, PrintComponent4FacingDirection,
-                        Commingler
-                    ) VALUES (
-                        @JobNumber, @JobName, @MailDate, @Customer, @SubAccount, @Csr, @DataProcessing,
-                        @Quantity, @PostageStyle, @PostageClass, @Sales, @StartDate, @Status,
-                        @Print, @TwoWayMatch,
-                        @MatchWayCount, @MatchComponent1, @MatchComponent2, @MatchComponent3, @MatchComponent4, @MatchComponent5,
-                        @PrintPieceCount, @PrintComponent1Name, @PrintComponent1FacingDirection,
-                        @PrintComponent2Name, @PrintComponent2FacingDirection,
-                        @PrintComponent3Name, @PrintComponent3FacingDirection,
-                        @PrintComponent4Name, @PrintComponent4FacingDirection,
-                        @Commingler
-                    );";
-
-                    cmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
-                    cmd.Parameters.AddWithValue("@JobName", job.JobName ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MailDate", job.MailDate.HasValue ? job.MailDate.Value : (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Customer", job.Customer ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@SubAccount", job.SubAccount ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Csr", job.Csr ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@DataProcessing", job.DataProcessing ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Quantity", job.Quantity ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PostageStyle", job.PostageStyle ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PostageClass", job.PostageClass ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Sales", job.Sales ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Commingler", (object?)job.Commingler ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@StartDate", job.StartDate.HasValue ? job.StartDate.Value : (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Status", job.Status ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Print", job.Print);
-                    cmd.Parameters.AddWithValue("@TwoWayMatch", job.TwoWayMatch);
-                    cmd.Parameters.AddWithValue("@MatchWayCount", job.MatchWayCount.HasValue ? job.MatchWayCount.Value : (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MatchComponent1", job.MatchComponent1 ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MatchComponent2", job.MatchComponent2 ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MatchComponent3", job.MatchComponent3 ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MatchComponent4", job.MatchComponent4 ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@MatchComponent5", job.MatchComponent5 ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintPieceCount", job.PrintPieceCount.HasValue ? job.PrintPieceCount.Value : (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent1Name", job.PrintComponent1Name ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent1FacingDirection", job.PrintComponent1FacingDirection ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent2Name", job.PrintComponent2Name ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent2FacingDirection", job.PrintComponent2FacingDirection ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent3Name", job.PrintComponent3Name ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent3FacingDirection", job.PrintComponent3FacingDirection ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent4Name", job.PrintComponent4Name ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PrintComponent4FacingDirection", job.PrintComponent4FacingDirection ?? (object)DBNull.Value);
-
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (SqlCommand mailCmd = conn.CreateCommand())
-                {
-                    mailCmd.Transaction = tx;
-
-                    mailCmd.CommandText = @"
-                        INSERT INTO dbo.MailChart (
-                            JobNumber, Kit, Customer, JobName, Class, AE, MailDate, Quantity, StyleTruck, Commingler
-                        ) VALUES (
-                            @JobNumber, @Kit, @Customer, @JobName, @Class, @AE, @MailDate, @Quantity, @StyleTruck, @Commingler
-                        );";
-
-                    mailCmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
-                    mailCmd.Parameters.AddWithValue("@Kit", 1);
-                    mailCmd.Parameters.AddWithValue("@Customer", (object?)job.Customer ?? DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@JobName", (object?)job.JobName ?? DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@Class", (object?)job.PostageClass ?? DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@AE", (object?)job.Csr ?? DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@MailDate", job.MailDate.HasValue ? job.MailDate.Value : (object)DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@Quantity", 0);
-                    mailCmd.Parameters.AddWithValue("@StyleTruck", (object?)job.PostageStyle ?? DBNull.Value);
-                    mailCmd.Parameters.AddWithValue("@Commingler", (object?)job.Commingler ?? DBNull.Value);
-
-                    mailCmd.ExecuteNonQuery();
-                }
-
-                if (ShouldCreateTasksForJob(job))
-                {
-                    tasksCreated = CreateTasksFromTemplates(conn, tx, job);
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        "Skipping task generation for Job {JobNumber}: MailDate is null or before today ({Today}).",
-                        job.JobNumber,
-                        DateTime.Today.ToString("yyyy-MM-dd"));
-                }
-
-                tx.Commit();
-                return tasksCreated;
-            }
-            catch
-            {
-                tx.Rollback();
-                throw;
-            }
-        }
-
-        private static bool ShouldCreateTasksForJob(JobModel job)
-        {
-            return job.MailDate.HasValue && job.MailDate.Value.Date >= DateTime.Today;
-        }
-
-        private int CreateTasksFromTemplates(SqlConnection conn, SqlTransaction tx, JobModel job)
-        {
-            var hasIsActiveColumn = HasTaskTemplateColumn(conn, tx, "IsActive");
-            var templates = ReadTaskTemplates(conn, tx, activeOnly: hasIsActiveColumn);
-
-            if (hasIsActiveColumn && templates.Count == 0)
-            {
-                _logger.LogWarning("No active task templates found. Falling back to all task templates for job {JobNumber}.", job.JobNumber);
-                templates = ReadTaskTemplates(conn, tx, activeOnly: false);
-            }
-
-            if (templates.Count == 0)
-            {
-                templates = GetBuiltInDefaultTemplates();
-                _logger.LogWarning("No DB task templates found. Using built-in defaults for job {JobNumber}.", job.JobNumber);
-            }
-
-            var createdCount = 0;
-            foreach (TaskTemplate template in templates)
-            {
-                using SqlCommand cmd = conn.CreateCommand();
-                cmd.Transaction = tx;
-
-                cmd.CommandText = @"
-                    INSERT INTO dbo.Tasks (
-                        JobNumber, TaskNumber, TaskName, Stage, AssignedTo, Assignee2,
-                        DueDate, OffsetFromStartDate, OffsetFromMailDate, Dependencies, Status
-                    ) VALUES (
-                        @JobNumber, @TaskNumber, @TaskName, @Stage, @AssignedTo, @Assignee2,
-                        @DueDate, @OffsetFromStartDate, @OffsetFromMailDate, @Dependencies, @Status
-                    );";
-
-                string assignedTo = template.Assignee switch
-                {
-                    "CSR" => job.Csr ?? "CSR",
-                    "DP" => job.DataProcessing ?? "DP",
-                    null => "Unassigned",
-                    _ => template.Assignee
-                };
-
-                string? assignee2 = null;
-                if (!string.IsNullOrWhiteSpace(template.Assignee2))
-                {
-                    assignee2 = template.Assignee2 switch
-                    {
-                        "CSR" => job.Csr ?? "CSR",
-                        "DP" => job.DataProcessing ?? "DP",
-                        _ => template.Assignee2
-                    };
-                }
-
-                DateTime? dueDate = null;
-                if (template.OffsetFromStartDate.HasValue && job.StartDate.HasValue)
-                {
-                    dueDate = job.StartDate.Value.AddDays(template.OffsetFromStartDate.Value);
-                }
-                else if (template.OffsetFromMailDate.HasValue && job.MailDate.HasValue)
-                {
-                    dueDate = job.MailDate.Value.AddDays(template.OffsetFromMailDate.Value);
-                }
-
-                cmd.Parameters.AddWithValue("@JobNumber", job.JobNumber);
-                cmd.Parameters.AddWithValue("@TaskNumber", template.TaskNumber);
-                cmd.Parameters.AddWithValue("@TaskName", template.TaskName);
-                cmd.Parameters.AddWithValue("@Stage", (object?)template.Stage ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@AssignedTo", assignedTo);
-                cmd.Parameters.AddWithValue("@Assignee2", (object?)assignee2 ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@DueDate", dueDate.HasValue ? dueDate.Value : (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@OffsetFromStartDate", (object?)template.OffsetFromStartDate ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@OffsetFromMailDate", (object?)template.OffsetFromMailDate ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Dependencies", (object?)template.Dependencies ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Status", "Scheduled");
-
-                cmd.ExecuteNonQuery();
-                createdCount++;
-            }
-
-            return createdCount;
-        }
-
-        private List<TaskTemplate> ReadTaskTemplates(SqlConnection conn, SqlTransaction tx, bool activeOnly)
-        {
-            var templates = new List<TaskTemplate>();
-
-            using SqlCommand cmd = conn.CreateCommand();
-            cmd.Transaction = tx;
-            cmd.CommandText = $@"
-                SELECT TaskNumber, TaskName, Stage, DefaultAssignee, DaysOffset, Dependencies
-                FROM dbo.TaskTemplates
-                {(activeOnly ? "WHERE IsActive = 1" : string.Empty)}
-                ORDER BY TaskNumber;";
-
-            using SqlDataReader reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                templates.Add(new TaskTemplate
-                {
-                    TaskNumber = reader.GetInt32(0),
-                    TaskName = reader.GetString(1),
-                    Stage = reader.IsDBNull(2) ? null : reader.GetString(2),
-                    Assignee = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    Assignee2 = null,
-                    OffsetFromStartDate = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
-                    OffsetFromMailDate = null,
-                    Dependencies = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Category = null
-                });
-            }
-
-            return templates;
-        }
-
-        private static bool HasTaskTemplateColumn(SqlConnection conn, SqlTransaction tx, string columnName)
-        {
-            using SqlCommand cmd = conn.CreateCommand();
-            cmd.Transaction = tx;
-            cmd.CommandText = @"
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = 'dbo'
-                  AND TABLE_NAME = 'TaskTemplates'
-                  AND COLUMN_NAME = @ColumnName;";
-            cmd.Parameters.AddWithValue("@ColumnName", columnName);
-            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-        }
-
-        private static List<TaskTemplate> GetBuiltInDefaultTemplates()
-        {
-            return
-            [
-                new TaskTemplate { TaskNumber = 1, TaskName = "Job Intake", Stage = "Intake", Assignee = "CSR", OffsetFromStartDate = 0, Dependencies = null },
-                new TaskTemplate { TaskNumber = 2, TaskName = "Data Received", Stage = "Data", Assignee = "DP", OffsetFromStartDate = 0, Dependencies = "1" },
-                new TaskTemplate { TaskNumber = 3, TaskName = "Data Review", Stage = "Data", Assignee = "DP", OffsetFromStartDate = 1, Dependencies = "2" },
-                new TaskTemplate { TaskNumber = 4, TaskName = "Counts Approved", Stage = "Data", Assignee = "CSR", OffsetFromStartDate = 2, Dependencies = "3" },
-                new TaskTemplate { TaskNumber = 5, TaskName = "Art Proof Ready", Stage = "Prepress", Assignee = "CSR", OffsetFromStartDate = 3, Dependencies = "4" },
-                new TaskTemplate { TaskNumber = 6, TaskName = "Signoffs Due", Stage = "Prepress", Assignee = "CSR", OffsetFromStartDate = 5, Dependencies = "5" },
-                new TaskTemplate { TaskNumber = 7, TaskName = "Signoffs Approved", Stage = "Prepress", Assignee = "CSR", OffsetFromStartDate = 7, Dependencies = "6" },
-                new TaskTemplate { TaskNumber = 8, TaskName = "Merge/Purge", Stage = "Data", Assignee = "DP", OffsetFromStartDate = 8, Dependencies = "4" },
-                new TaskTemplate { TaskNumber = 9, TaskName = "Print Files Ready", Stage = "Prepress", Assignee = "DP", OffsetFromStartDate = 9, Dependencies = "8" },
-                new TaskTemplate { TaskNumber = 10, TaskName = "Print Production Start", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 10, Dependencies = "9" },
-                new TaskTemplate { TaskNumber = 11, TaskName = "Print Quality Check", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 11, Dependencies = "10" },
-                new TaskTemplate { TaskNumber = 12, TaskName = "Lettershop Setup", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 12, Dependencies = "11" },
-                new TaskTemplate { TaskNumber = 13, TaskName = "Personalization", Stage = "Production", Assignee = "DP", OffsetFromStartDate = 13, Dependencies = "12" },
-                new TaskTemplate { TaskNumber = 14, TaskName = "Insert Setup", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 14, Dependencies = "12" },
-                new TaskTemplate { TaskNumber = 15, TaskName = "Match Setup", Stage = "Production", Assignee = "DP", OffsetFromStartDate = 15, Dependencies = "13" },
-                new TaskTemplate { TaskNumber = 16, TaskName = "Addressing", Stage = "Production", Assignee = "DP", OffsetFromStartDate = 16, Dependencies = "15" },
-                new TaskTemplate { TaskNumber = 17, TaskName = "Postal Prep", Stage = "Postal", Assignee = "CSR", OffsetFromStartDate = 17, Dependencies = "16" },
-                new TaskTemplate { TaskNumber = 18, TaskName = "Postal Docs Complete", Stage = "Postal", Assignee = "CSR", OffsetFromStartDate = 18, Dependencies = "17" },
-                new TaskTemplate { TaskNumber = 19, TaskName = "Production Out", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 19, Dependencies = "18" },
-                new TaskTemplate { TaskNumber = 20, TaskName = "Final QC", Stage = "Production", Assignee = "CSR", OffsetFromStartDate = 20, Dependencies = "19" },
-                new TaskTemplate { TaskNumber = 21, TaskName = "Truck/Style Confirmed", Stage = "Postal", Assignee = "CSR", OffsetFromStartDate = 21, Dependencies = "20" },
-                new TaskTemplate { TaskNumber = 22, TaskName = "Mail Date", Stage = "Postal", Assignee = "CSR", OffsetFromStartDate = 22, Dependencies = "21" }
-            ];
-        }
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            var results = new List<ValidationResult>();
-
-            if (Job.TwoWayMatch)
-            {
-                var count = Job.MatchWayCount ?? 0;
-                if (count < 2)
-                {
-                    results.Add(new ValidationResult(
-                        "When Match Job is selected, 'How many way match?' must be at least 2.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.MatchWayCount)}" }
-                    ));
-                }
-
-                if (string.IsNullOrWhiteSpace(Job.MatchComponent1))
-                {
-                    results.Add(new ValidationResult(
-                        "Matching Component 1 is required when Match Job is selected.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.MatchComponent1)}" }
-                    ));
-                }
-
-                if (string.IsNullOrWhiteSpace(Job.MatchComponent2) && count >= 2)
-                {
-                    results.Add(new ValidationResult(
-                        "Matching Component 2 is required when Match Job is selected.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.MatchComponent2)}" }
-                    ));
-                }
-            }
-
-            if (Job.Print)
-            {
-                var pieces = Job.PrintPieceCount ?? 0;
-                if (pieces < 1)
-                {
-                    results.Add(new ValidationResult(
-                        "When Print is selected, 'How many pieces printing?' must be at least 1.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.PrintPieceCount)}" }
-                    ));
-                }
-
-                if (string.IsNullOrWhiteSpace(Job.PrintComponent1Name))
-                {
-                    results.Add(new ValidationResult(
-                        "Component 1 Name is required when Print is selected.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.PrintComponent1Name)}" }
-                    ));
-                }
-
-                if (pieces >= 2 && string.IsNullOrWhiteSpace(Job.PrintComponent2Name))
-                {
-                    results.Add(new ValidationResult(
-                        "Component 2 Name is required when printing 2 or more pieces.",
-                        new[] { $"{nameof(Job)}.{nameof(Job.PrintComponent2Name)}" }
-                    ));
-                }
-            }
-
-            return results;
-        }
-
-        private class TaskTemplate
-        {
-            public int TaskNumber { get; set; }
-            public string TaskName { get; set; } = string.Empty;
-            public string? Stage { get; set; }
-            public string? Assignee { get; set; }
-            public string? Assignee2 { get; set; }
-            public int? OffsetFromStartDate { get; set; }
-            public int? OffsetFromMailDate { get; set; }
-            public string? Dependencies { get; set; }
-            public string? Category { get; set; }
-        }
-    }
+	}
 }

@@ -4,195 +4,407 @@
     ViewData["Title"] = "Job Entry Form";
 }
 
-<h1>Job Entry Form</h1>
+<h1 class="mb-4">Job Entry Form</h1>
 
 @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
 {
     <div class="alert alert-success">@Model.StatusMessage</div>
 }
 
-<form method="post" class="row g-3">
-    <div asp-validation-summary="All" class="text-danger"></div>
+<form method="post" autocomplete="off">
 
-    <!-- JOB INFO -->
-    <fieldset>
-        <legend>Job Info</legend>
-        <div class="col-md-3">
-            <label asp-for="Job.JobNumber" class="form-label"></label>
-            <input asp-for="Job.JobNumber" class="form-control" readonly />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.Customer" class="form-label"></label>
-            <select asp-for="Job.Customer" class="form-control" asp-items="Model.CustomerList"></select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.SubAccount" class="form-label"></label>
-            <select asp-for="Job.SubAccount" class="form-control" asp-items="Model.SubAccountList"></select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.JobName" class="form-label"></label>
-            <input asp-for="Job.JobName" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.Quantity" class="form-label"></label>
-            <input asp-for="Job.Quantity" class="form-control" />
-        </div>
-    </fieldset>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-    <!-- SCHEDULE -->
-    <fieldset>
-        <legend>Schedule</legend>
-        <div class="col-md-3">
-            <label asp-for="Job.StartDate" class="form-label"></label>
-            <input asp-for="Job.StartDate" class="form-control" type="date" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.DataDueDate"
-                   class="form-label"></label>
-            <input asp-for="Job.DataDueDate" class="form-control" type="date" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.MailDate" class="form-label"></label>
-            <input asp-for="Job.MailDate" class="form-control" type="date" />
-        </div>
-    </fieldset>
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Job Information</div>
+        <div class="card-body">
 
-    <!-- POSTAGE -->
-    <fieldset>
-        <legend>Postage</legend>
-        <div class="col-md-3">
-            <label asp-for="Job.PostageClass" class="form-label"></label>
-            <select asp-for="Job.PostageClass" class="form-control">
-                <option value="Full 1st Class">Full 1st Class</option>
-                <option value="1st Class">1st Class</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.PostageStyle" class="form-label"></label>
-            <select asp-for="Job.PostageStyle" class="form-control">
-                <option value="Stamp">Stamp</option>
-                <option value="Meter">Meter</option>
-                <option value="Indicia">Indicia</option>
-            </select>
-        </div>
-    </fieldset>
+            <div class="row g-3">
 
-    <!-- RESPONSIBILITY -->
-    <fieldset>
-        <legend>Responsibility</legend>
-        <div class="col-md-3">
-            <label asp-for="Job.Csr" class="form-label"></label>
-            <select asp-for="Job.Csr" class="form-control" asp-items="Model.CsrList"></select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.DataProcessing" class="form-label"></label>
-            <select asp-for="Job.DataProcessing" class="form-control" asp-items="Model.DataProcessingList"></select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Job.Sales" class="form-label"></label>
-            <select asp-for="Job.Sales" class="form-control" asp-items="Model.SalesList"></select>
-        </div>
-    </fieldset>
+                <div class="col-md-2">
+                    <label asp-for="Job.JobNumber"></label>
+                    <input asp-for="Job.JobNumber" class="form-control" readonly />
+                </div>
 
-    <!-- PRINT DETAILS -->
-    <fieldset>
-        <legend>Print Details</legend>
-        <div class="col-md-3">
-            <label>Print?</label>
-            <select id="printSelect" name="Print" class="form-control" onchange="togglePrintComponents()">
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-            </select>
-        </div>
-        <div id="printComponentsSection" style="display:none;">
-            <div class="col-md-3">
-                <label>How many components?</label>
-                <select id="componentCount" name="ComponentCount" class="form-control" onchange="renderComponentFields()">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <div class="col-md-3">
+                    <label asp-for="Job.Customer"></label>
+                    <select asp-for="Job.Customer" asp-items="Model.CustomerList" class="form-select">
+                        <option value="">Select</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Job.SubAccount"></label>
+                    <select asp-for="Job.SubAccount" asp-items="Model.SubAccountList" class="form-select">
+                        <option value="">Select</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Job.JobName"></label>
+                    <input asp-for="Job.JobName" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Job.Quantity"></label>
+                    <input asp-for="Job.Quantity" class="form-control" />
+                </div>
+
             </div>
-            <div id="componentFields"></div>
         </div>
-    </fieldset>
-
-    <!-- MATCH MAIL -->
-    <fieldset>
-        <legend>Match Mail</legend>
-        <div class="col-md-3">
-            <label>Match Mail?</label>
-            <select id="matchMailSelect" name="MatchMail" class="form-control" onchange="toggleMatchComponents()">
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-            </select>
-        </div>
-        <div id="matchComponentsSection" style="display:none;">
-            <div class="col-md-3">
-                <label>How many way match?</label>
-                <select id="matchCount" name="MatchCount" class="form-control" onchange="renderMatchFields()">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-            </div>
-            <div id="matchFields"></div>
-        </div>
-    </fieldset>
-
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary">Save Job</button>
     </div>
+
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Schedule</div>
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label asp-for="Job.StartDate"></label>
+                    <input asp-for="Job.StartDate" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Job.MailDate"></label>
+                    <input asp-for="Job.MailDate" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Job.JobSpeed"></label>
+                    <select asp-for="Job.JobSpeed" class="form-select">
+                        <option value="Standard">Standard (15 business days)</option>
+                        <option value="Rush">Rush (12 business days)</option>
+                        <option value="Critical">Critical (5 business days)</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="form-text mt-2">
+                If Start Date is left blank, it will be calculated from Mail Date using the selected schedule.
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Postage</div>
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label asp-for="Job.PostageClass"></label>
+                    <select asp-for="Job.PostageClass" class="form-select">
+                        <option value="">Select</option>
+                        <option value="Full 1st Class">Full 1st Class</option>
+                        <option value="Presorted First Class">Presorted First Class</option>
+                        <option value="Non-Profit">Non-Profit</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Multi Stamp">Multi Stamp</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Job.PostageStyle"></label>
+                    <select asp-for="Job.PostageStyle" class="form-select">
+                        <option value="">Select</option>
+                        <option value="Stamp">Stamp</option>
+                        <option value="Meter">Meter</option>
+                        <option value="Indicia">Indicia</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Responsibility</div>
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label asp-for="Job.Csr"></label>
+                    <select asp-for="Job.Csr" asp-items="Model.CsrList" class="form-select">
+                        <option value="">Select</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Job.DataProcessing"></label>
+                    <select asp-for="Job.DataProcessing" asp-items="Model.DataProcessingList" class="form-select">
+                        <option value="">Select</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Job.Sales"></label>
+                    <select asp-for="Job.Sales" asp-items="Model.SalesList" class="form-select">
+                        <option value="">Select</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Print</div>
+        <div class="card-body">
+
+            <div class="form-check">
+                <input asp-for="Job.Print" class="form-check-input" type="checkbox" id="printCheck"/>
+                <label asp-for="Job.Print" class="form-check-label">Print Job</label>
+            </div>
+
+            <div class="mt-3" id="printSection" style="display:none">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Job.PrintPieceCount">How Many Components</label>
+                        <input asp-for="Job.PrintPieceCount" id="printComponentCount" type="number" min="1" max="4" class="form-control" />
+                        <span asp-validation-for="Job.PrintPieceCount" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 print-component-row" data-print-component="1" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent1Name">Component 1 Name</label>
+                        <input asp-for="Job.PrintComponent1Name" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent1Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent1FacingDirection">Component 1 Size</label>
+                        <input asp-for="Job.PrintComponent1FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent1FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 print-component-row" data-print-component="2" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent2Name">Component 2 Name</label>
+                        <input asp-for="Job.PrintComponent2Name" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent2Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent2FacingDirection">Component 2 Size</label>
+                        <input asp-for="Job.PrintComponent2FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent2FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 print-component-row" data-print-component="3" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent3Name">Component 3 Name</label>
+                        <input asp-for="Job.PrintComponent3Name" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent3Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent3FacingDirection">Component 3 Size</label>
+                        <input asp-for="Job.PrintComponent3FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent3FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 print-component-row" data-print-component="4" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent4Name">Component 4 Name</label>
+                        <input asp-for="Job.PrintComponent4Name" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent4Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.PrintComponent4FacingDirection">Component 4 Size</label>
+                        <input asp-for="Job.PrintComponent4FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.PrintComponent4FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Match Mail</div>
+        <div class="card-body">
+
+            <div class="form-check">
+                <input asp-for="Job.TwoWayMatch" class="form-check-input" type="checkbox" id="matchCheck"/>
+                <label asp-for="Job.TwoWayMatch" class="form-check-label">Match Mail</label>
+            </div>
+
+            <div class="mt-3" id="matchSection" style="display:none">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Job.MatchWayCount">How Many Way Match</label>
+                        <input asp-for="Job.MatchWayCount" id="matchWayCountInput" type="number" min="2" max="5" class="form-control" />
+                        <span asp-validation-for="Job.MatchWayCount" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 match-component-row" data-match-component="1" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent1">Matching Component 1 Name</label>
+                        <input asp-for="Job.MatchComponent1" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent1" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent1FacingDirection">Component 1 Facing Direction</label>
+                        <input asp-for="Job.MatchComponent1FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent1FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 match-component-row" data-match-component="2" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent2">Matching Component 2 Name</label>
+                        <input asp-for="Job.MatchComponent2" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent2" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent2FacingDirection">Component 2 Facing Direction</label>
+                        <input asp-for="Job.MatchComponent2FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent2FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 match-component-row" data-match-component="3" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent3">Matching Component 3 Name</label>
+                        <input asp-for="Job.MatchComponent3" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent3" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent3FacingDirection">Component 3 Facing Direction</label>
+                        <input asp-for="Job.MatchComponent3FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent3FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 match-component-row" data-match-component="4" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent4">Matching Component 4 Name</label>
+                        <input asp-for="Job.MatchComponent4" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent4" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent4FacingDirection">Component 4 Facing Direction</label>
+                        <input asp-for="Job.MatchComponent4FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent4FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1 match-component-row" data-match-component="5" style="display:none">
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent5">Matching Component 5 Name</label>
+                        <input asp-for="Job.MatchComponent5" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent5" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Job.MatchComponent5FacingDirection">Component 5 Facing Direction</label>
+                        <input asp-for="Job.MatchComponent5FacingDirection" class="form-control" />
+                        <span asp-validation-for="Job.MatchComponent5FacingDirection" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">Save Job</button>
+
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        function togglePrintComponents() {
-            var print = document.getElementById('printSelect').value === 'true';
-            document.getElementById('printComponentsSection').style.display = print ? '' : 'none';
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const printCheck = document.getElementById("printCheck");
+    const printSection = document.getElementById("printSection");
+    const printCountInput = document.getElementById("printComponentCount");
+    const printRows = Array.from(document.querySelectorAll(".print-component-row"));
+    const matchCheck = document.getElementById("matchCheck");
+    const matchSection = document.getElementById("matchSection");
+    const matchCountInput = document.getElementById("matchWayCountInput");
+    const matchRows = Array.from(document.querySelectorAll(".match-component-row"));
+
+    const setRowVisibility = (rows, visibleCount) => {
+        rows.forEach(function (row, index) {
+            const isVisible = index < visibleCount;
+            row.style.display = isVisible ? "" : "none";
+            row.querySelectorAll("input, select, textarea").forEach(function (input) {
+                input.disabled = !isVisible;
+            });
+        });
+    };
+
+    const updatePrintSection = () => {
+        if (!printCheck || !printSection || !printCountInput) {
+            return;
         }
-        function renderComponentFields() {
-            var count = parseInt(document.getElementById('componentCount').value);
-            var html = '';
-            for (var i = 1; i <= count; i++) {
-                html += `<div class="row mb-2">
-                    <div class="col-md-6">
-                        <label>Component ${i} Name</label>
-                        <input name="ComponentName${i}" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                        <label>Facing Direction</label>
-                        <input name="FacingDirection${i}" class="form-control" />
-                    </div>
-                </div>`;
-            }
-            document.getElementById('componentFields').innerHTML = html;
+
+        const isEnabled = printCheck.checked;
+        printSection.style.display = isEnabled ? "block" : "none";
+        printCountInput.disabled = !isEnabled;
+
+        if (!isEnabled) {
+            setRowVisibility(printRows, 0);
+            return;
         }
-        function toggleMatchComponents() {
-            var match = document.getElementById('matchMailSelect').value === 'true';
-            document.getElementById('matchComponentsSection').style.display = match ? '' : 'none';
+
+        const count = Number.parseInt(printCountInput.value || "", 10);
+        const visibleCount = Number.isFinite(count) ? Math.min(Math.max(count, 1), 4) : 1;
+        setRowVisibility(printRows, visibleCount);
+    };
+
+    const updateMatchSection = () => {
+        if (!matchCheck || !matchSection || !matchCountInput) {
+            return;
         }
-        function renderMatchFields() {
-            var count = parseInt(document.getElementById('matchCount').value);
-            var html = '';
-            for (var i = 1; i <= count; i++) {
-                html += `<div class="row mb-2">
-                    <div class="col-md-6">
-                        <label>Match Component ${i} Name</label>
-                        <input name="MatchComponentName${i}" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                        <label>Facing Direction</label>
-                        <input name="MatchFacingDirection${i}" class="form-control" />
-                    </div>
-                </div>`;
-            }
-            document.getElementById('matchFields').innerHTML = html;
+
+        const isEnabled = matchCheck.checked;
+        matchSection.style.display = isEnabled ? "block" : "none";
+        matchCountInput.disabled = !isEnabled;
+
+        if (!isEnabled) {
+            setRowVisibility(matchRows, 0);
+            return;
         }
-    </script>
+
+        const count = Number.parseInt(matchCountInput.value || "", 10);
+        const visibleCount = Number.isFinite(count) ? Math.min(Math.max(count, 2), 5) : 2;
+        setRowVisibility(matchRows, visibleCount);
+    };
+
+    if (printCheck) {
+        printCheck.addEventListener("change", function () {
+            updatePrintSection();
+        });
+    }
+    if (printCountInput) {
+        printCountInput.addEventListener("input", function () {
+            updatePrintSection();
+        });
+    }
+    updatePrintSection();
+
+    if (matchCheck) {
+        matchCheck.addEventListener("change", function () {
+            updateMatchSection();
+        });
+    }
+    if (matchCountInput) {
+        matchCountInput.addEventListener("input", function () {
+            updateMatchSection();
+        });
+    }
+    updateMatchSection();
+});
+</script>
 }

@@ -1,20 +1,19 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Data.SqlClient;
+using JobEntryApp.Infrastructure;
 
 namespace JobEntryApp.Models
 {
     public class JobModel
     {
-		private bool print;
-
-		public int JobNumber { get; set; }
+        public int JobNumber { get; set; }
 
         public string? Customer { get; set; }
-
         public string? JobName { get; set; }
 
         public DateTime? DataDueDate { get; set; }
 
-        public DateTime? StartDate { get; set; }   // <-- Add this property
+        public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         [Required(ErrorMessage = "Mail Date is required.")]
         public DateTime? MailDate { get; set; }
@@ -31,10 +30,11 @@ namespace JobEntryApp.Models
         public string? PostageClass { get; set; }
         public string? Sales { get; set; }
         public string? Commingler { get; set; }
-		public string Status { get => field; set => field = value; } = "New";
 
-		public bool Print { get; set; }
-		public bool TwoWayMatch { get; set; }
+        public string Status { get; set; }
+
+        public bool Print { get; set; }
+        public bool TwoWayMatch { get; set; }
 
         public int? MatchWayCount { get; set; }
         public string? MatchComponent1 { get; set; }
@@ -52,5 +52,21 @@ namespace JobEntryApp.Models
         public string? PrintComponent3FacingDirection { get; set; }
         public string? PrintComponent4Name { get; set; }
         public string? PrintComponent4FacingDirection { get; set; }
+        public string? PrintComponent5Name { get; set; }
+        public string? PrintComponent5FacingDirection { get; set; }
+
+        public string? MatchComponent1FacingDirection { get; set; }
+        public string? MatchComponent2FacingDirection { get; set; }
+        public string? MatchComponent3FacingDirection { get; set; }
+        public string? MatchComponent4FacingDirection { get; set; }
+        public string? MatchComponent5FacingDirection { get; set; }
+
+        public bool RushJob { get; set; }
+        public string JobSpeed { get; set; } = JobSchedules.Standard;
+
+        public JobModel()
+        {
+            Status = "New";
+        }
     }
 }

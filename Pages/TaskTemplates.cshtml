@@ -1,72 +1,40 @@
 @page
 @model JobEntryApp.Pages.TaskTemplatesModel
-@{
-    ViewData["Title"] = "Tasks Template";
-}
 
-<h1>Tasks Template</h1>
+<h1>Task Templates</h1>
 
-@if (!string.IsNullOrWhiteSpace(Model.LoadError))
-{
-    <div class="alert alert-warning">@Model.LoadError</div>
-}
-else
-{
-    @if (Model.UsingBuiltInDefaults)
-    {
-        <div class="alert alert-info py-2">
-            No rows were found in <code>dbo.TaskTemplates</code>. Showing built-in defaults used by scheduling.
-        </div>
-    }
+<p class="text-muted">
+    This page shows the template rows that generate job tasks.
+</p>
 
-    @if (Model.ShowingAllBecauseNoActive)
-    {
-        <div class="alert alert-warning py-2">
-            No active templates were found. Showing all templates so Tasks can still be reviewed.
-        </div>
-    }
+<table class="table table-striped">
 
-    <div class="text-muted mb-2">
-        Task templates from <code>dbo.TaskTemplates</code>.
-        @if (Model.HasIsActiveColumn)
+    <thead>
+        <tr>
+            <th>Order</th>
+            <th>Task Name</th>
+            <th>Stage</th>
+            <th>Offset Days</th>
+            <th>Anchor</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @if (Model.TaskTemplates != null)
         {
-            <span>Active: <strong>@Model.ActiveCount</strong> / @Model.Items.Count</span>
+            foreach (var task in Model.TaskTemplates)
+            {
+                <tr>
+                    <td>@task.SortOrder</td>
+                    <td>@task.TaskName</td>
+                    <td>@task.Stage</td>
+                    <td>@task.OffsetDays</td>
+                    <td>@task.AnchorType</td>
+                </tr>
+            }
         }
-    </div>
-}
 
-@if (Model.Items.Count == 0)
-{
-    <div class="alert alert-info">No task templates found.</div>
-}
+    </tbody>
 
-@if (Model.Items.Count > 0)
-{
-    <table class="table table-sm table-striped">
-        <thead>
-            <tr>
-                <th>Task #</th>
-                <th>Task Name</th>
-                <th>Stage</th>
-                <th>Default Assignee</th>
-                <th>Days Offset</th>
-                <th>Dependencies</th>
-                <th>Active</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var t in Model.Items)
-        {
-            <tr>
-                <td>@t.TaskNumber</td>
-                <td>@t.TaskName</td>
-                <td>@t.Stage</td>
-                <td>@t.DefaultAssignee</td>
-                <td>@t.DaysOffset</td>
-                <td>@t.Dependencies</td>
-                <td>@(t.IsActive ? "Yes" : "No")</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+</table>

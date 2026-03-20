@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
+using JobEntryApp.Infrastructure;
 
 namespace JobEntryApp.Pages
 {
@@ -126,9 +127,9 @@ namespace JobEntryApp.Pages
             {
                 items.Add(new TaskSummary
                 {
-                    TaskId = reader.GetInt32(0),
-                    JobNumber = reader.GetInt32(1),
-                    TaskNumber = reader.GetInt32(2),
+                    TaskId = reader.GetGuid(0),
+                    JobNumber = SqlReaderValue.ReadInt32(reader, 1),
+                    TaskNumber = SqlReaderValue.ReadInt32(reader, 2),
                     TaskName = SanitizeText(reader.IsDBNull(3) ? string.Empty : reader.GetString(3)),
                     AssignedTo = SanitizeText(reader.IsDBNull(4) ? string.Empty : reader.GetString(4)),
                     DueDate = reader.IsDBNull(5) ? (DateTime?)null : reader.GetDateTime(5),
@@ -163,7 +164,7 @@ namespace JobEntryApp.Pages
 
         public class TaskSummary
         {
-            public int TaskId { get; set; }
+            public Guid TaskId { get; set; }
             public int JobNumber { get; set; }
             public int TaskNumber { get; set; }
             public string TaskName { get; set; } = string.Empty;

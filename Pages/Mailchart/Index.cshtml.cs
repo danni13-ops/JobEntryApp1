@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
+using JobEntryApp.Infrastructure;
 
 namespace JobEntryApp.Pages.Mailchart
 {
@@ -245,15 +246,15 @@ namespace JobEntryApp.Pages.Mailchart
             {
                 var item = new MailChartItem
                 {
-                    MailChartId = reader.GetInt32(0),
-                    JobNumber = reader.GetInt32(1),
-                    Kit = reader.GetInt32(2),
+                    MailChartId = SqlReaderValue.ReadInt32(reader, 0),
+                    JobNumber = SqlReaderValue.ReadInt32(reader, 1),
+                    Kit = SqlReaderValue.ReadInt32(reader, 2),
                     Customer = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
                     JobName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                     Class = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                     AE = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                     MailDate = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7),
-                    Quantity = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                    Quantity = reader.IsDBNull(8) ? 0 : SqlReaderValue.ReadInt32(reader, 8),
                     StyleTruck = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
                     Commingler = reader.IsDBNull(10) ? string.Empty : reader.GetString(10)
                 };

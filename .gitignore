@@ -1,3 +1,17 @@
 bin/
 obj/
+.vs/
+artifacts/
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.suo
+*.wsuo
+*.user
+*.cache
+cookie.txt
+app-run.err
+app-run.log
+run.out.log
 secrets/google-drive-service-account.json

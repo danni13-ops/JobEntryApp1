@@ -1,4 +1,4 @@
-@page "{jobNumber:int}"
+@page
 @model JobEntryApp.Pages.Jobs.DetailsModel
 @{
     ViewData["Title"] = $"Job #{Model.Job?.JobNumber}";
@@ -25,6 +25,9 @@ else
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-primary">@Model.Job.Status</span>
+            <a asp-page="/MailChart/Index" asp-route-search="@Model.Job.JobNumber" class="btn btn-outline-primary">
+                View Mail Chart
+            </a>
             <a asp-page="/Tasks" asp-route-jobNumber="@Model.Job.JobNumber" class="btn btn-primary">
                 View Tasks
             </a>
@@ -49,6 +52,9 @@ else
 
                         <dt class="col-4">Start Date</dt>
                         <dd class="col-8">@Model.Job.StartDate?.ToString("MMM dd, yyyy")</dd>
+
+                        <dt class="col-4">Schedule</dt>
+                        <dd class="col-8">@Model.Job.JobSpeed</dd>
 
                         <dt class="col-4">Quantity</dt>
                         <dd class="col-8">@Model.Job.Quantity?.ToString("N0")</dd>
@@ -101,25 +107,169 @@ else
             <div class="card">
                 <div class="card-header">Job Folders</div>
                 <div class="card-body">
-                    <p class="text-muted">
-                        File upload sections (Art, Control Cards, Postal, Reports, Signoffs, etc.) will go here.
+                    @if (!string.IsNullOrWhiteSpace(Model.JobFolderPath))
+                    {
+                        <div class="mb-2">
+                            <div class="small text-muted">Folder Path</div>
+                            <div class="small fw-semibold">@Model.JobFolderPath</div>
+                        </div>
+                    }
+
+                    <div class="mb-2">
+                        @if (Model.JobFolderExists)
+                        {
+                            <span class="badge bg-success">Folder Created</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Folder Not Found</span>
+                        }
+                    </div>
+
+                    <div class="small text-muted mb-1">Standard subfolders</div>
+                    <ul class="list-unstyled small mb-0">
+                        @foreach (var folder in JobEntryApp.Infrastructure.JobFolderService.StandardSubfolders)
+                        {
+                            <li class="mb-1">@folder</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-list-check me-1"></i>Task Summary</div>
+                <div class="card-body">
+                    @if (Model.TaskOverview.TotalCount == 0)
+                    {
+                        <p class="text-muted small mb-0">No generated tasks were found for this job yet.</p>
+                    }
+                    else
+                    {
+                        <div class="row text-center g-2 mb-3">
+                            <div class="col-3">
+                                <div class="border rounded p-2">
+                                    <div class="small text-muted">Total</div>
+                                    <div class="fw-semibold">@Model.TaskOverview.TotalCount</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="border rounded p-2">
+                                    <div class="small text-muted">Open</div>
+                                    <div class="fw-semibold">@Model.TaskOverview.OpenCount</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="border rounded p-2">
+                                    <div class="small text-muted">Done</div>
+                                    <div class="fw-semibold">@Model.TaskOverview.CompletedCount</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="border rounded p-2">
+                                    <div class="small text-muted">Overdue</div>
+                                    <div class="fw-semibold text-danger">@Model.TaskOverview.OverdueCount</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="progress" style="height: 1.25rem;" role="progressbar" aria-label="Job progress" aria-valuenow="@Model.TaskOverview.ProgressPercent" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-primary" style="width: @Model.TaskOverview.ProgressPercent%">@Model.TaskOverview.ProgressPercent%</div>
+                        </div>
+
+                        @if (Model.TaskOverview.StageSummaries.Any())
+                        {
+                            <div class="mt-3">
+                                @foreach (var stage in Model.TaskOverview.StageSummaries)
+                                {
+                                    <div class="d-flex justify-content-between small py-1 border-bottom">
+                                        <span>@stage.Stage</span>
+                                        <span class="text-muted">@stage.CompletedCount / @stage.TotalCount complete</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-clock-history me-1"></i>Upcoming Tasks</div>
+                <div class="card-body">
+                    @if (!Model.TaskOverview.UpcomingTasks.Any())
+                    {
+                        <p class="text-muted small mb-0">No open tasks are scheduled for this job.</p>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var task in Model.TaskOverview.UpcomingTasks)
+                            {
+                                var overdue = task.DueDate.HasValue && task.DueDate.Value.Date < DateTime.Today;
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start gap-3">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                @if (task.TaskNumber.HasValue)
+                                                {
+                                                    <span class="text-muted me-1">#@task.TaskNumber</span>
+                                                }
+                                                @task.TaskName
+                                            </div>
+                                            <div class="small text-muted">@task.Stage</div>
+                                        </div>
+                                        <div class="text-end">
+                                            @if (overdue)
+                                            {
+                                                <span class="badge bg-danger">Overdue</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@task.Status</span>
+                                            }
+                                            <div class="small text-muted mt-1">@task.DueDate?.ToString("MM/dd/yyyy")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Cards & Documents -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-card-checklist me-1"></i>Control Cards</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-0">
+                        Laser, Inkjet, and Insertion control cards will be generated and saved here once the Control Card integration is complete.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-folder2 me-1"></i>Documents</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-0">
+                        Art, postal forms, signoffs, and reports will be accessible here once folder integration is enabled.
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tasks placeholder -->
-    <div class="card mb-3">
-        <div class="card-header">Tasks</div>
-        <div class="card-body">
-            <p class="text-muted">Task list with stages, assignees, and statuses will go here.</p>
-        </div>
-    </div>
-
     <!-- Comments & Notes placeholder -->
     <div class="card mb-3">
-        <div class="card-header">Comments &amp; Notes</div>
+        <div class="card-header fw-semibold"><i class="bi bi-chat-left-text me-1"></i>Comments &amp; Notes</div>
         <div class="card-body">
             <p class="text-muted">Comments and notes for this job will go here.</p>
         </div>

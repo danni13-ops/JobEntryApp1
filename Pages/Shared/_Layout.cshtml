@@ -1,157 +1,196 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration Config
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] - Action Mail Job Management</title>
-    <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/JobEntryApp.styles.css" asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/JobEntryApp.styles.css"
+          asp-append-version="true" />
+
     @if (!string.IsNullOrEmpty(Config["SignalRAccessToken"]))
     {
-        <meta name="signalr-token" content="@Config["SignalRAccessToken"]" />
+        <meta name="signalr-token"
+              content="@Config["SignalRAccessToken"]" />
     }
+
 </head>
+
 <body>
+
     <div class="d-flex app-shell">
+
+        <!-- Sidebar -->
+
         <div class="sidebar bg-primary text-white">
+
             <div class="p-4">
+
                 <div class="mb-4">
+
                     <div class="text-white mb-2">
-                        <i class="bi bi-envelope"></i> dsantone@actionmailer.com
+                        <i class="bi bi-envelope"></i>
+                        dsantone@actionmailer.com
                     </div>
-                    <span class="badge bg-danger">admin</span>
+
+                    <span class="badge bg-danger">
+                        admin
+                    </span>
+
                 </div>
 
                 <hr class="bg-white opacity-25" />
-                <h6 class="text-white-50 text-uppercase small mb-3">Navigation</h6>
 
-                <<ul class="nav flex-column">
+                <h6 class="text-white-50 text-uppercase small mb-3">
+                    Navigation
+                </h6>
 
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/Index">
-            <i class="bi bi-house-door me-2"></i> Home
-        </a>
-    </li>
+                <ul class="nav flex-column">
 
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/NewJob" ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/NewJob">
-            <i class="bi bi-plus-circle me-2"></i> Job Entry Form
-        </a>
-    </li>
-
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Jobs") == true ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/Jobs/Index">
-            <i class="bi bi-briefcase me-2"></i> Job Book
-        </a>
-    </li>
-
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/Jobs/Search" ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/Jobs/Search">
-            <i class="bi bi-search me-2"></i> Job Information
-        </a>
-    </li>
-
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Mailchart") == true ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/Mailchart/Index">
-            <i class="bi bi-calendar-event me-2"></i> Mail Chart
-        </a>
-    </li>
-
-    <li class="nav-item mb-2">
-        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskDashboard" ? "active bg-white bg-opacity-10 rounded" : "")"
-           asp-page="/TaskDashboard">
-            <i class="bi bi-kanban me-2"></i> Production
-        </a>
-    </li>
-
-</ul>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-white"
+                           asp-page="/Index">
+                            <i class="bi bi-house-door me-2"></i>
+                            Home
                         </a>
                     </li>
+
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/NewJob" ? "active bg-white bg-opacity-10 rounded" : "")"
+                        <a class="nav-link text-white"
                            asp-page="/NewJob">
-                            <i class="bi bi-plus-circle me-2"></i> Job Entry Form
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Job Entry Form
                         </a>
                     </li>
+
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Jobs") == true ? "active bg-white bg-opacity-10 rounded" : "")"
+                        <a class="nav-link text-white"
                            asp-page="/Jobs/Index">
-                            <i class="bi bi-briefcase me-2"></i> Jobs
+                            <i class="bi bi-briefcase me-2"></i>
+                            Job Book
                         </a>
                     </li>
+
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("/Mailchart") == true ? "active bg-white bg-opacity-10 rounded" : "")"
+                        <a class="nav-link text-white"
+                           asp-page="/Jobs/Search">
+                            <i class="bi bi-search me-2"></i>
+                            Job Information
+                        </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-white"
                            asp-page="/Mailchart/Index">
-                            <i class="bi bi-calendar-event me-2"></i> Mail Chart
+                            <i class="bi bi-calendar-event me-2"></i>
+                            Mail Chart
                         </a>
                     </li>
+
                     <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskTemplates" ? "active bg-white bg-opacity-10 rounded" : "")"
-                           asp-page="/TaskTemplates">
-                            <i class="bi bi-list-task me-2"></i> Tasks Template
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-white @(ViewContext.RouteData.Values["page"]?.ToString() == "/TaskDashboard" ? "active bg-white bg-opacity-10 rounded" : "")"
+                        <a class="nav-link text-white"
                            asp-page="/TaskDashboard">
-                            <i class="bi bi-kanban me-2"></i> Production
+                            <i class="bi bi-kanban me-2"></i>
+                            Production
                         </a>
                     </li>
+
                 </ul>
+
             </div>
+
         </div>
 
+        <!-- Main Content -->
+
         <div class="flex-grow-1 d-flex flex-column">
+
             <header class="bg-white border-bottom shadow-sm">
+
                 <div class="container-fluid px-4 py-3">
+
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fw-bold text-primary">Action Mail Job Management</h4>
+
+                        <h4 class="mb-0 fw-bold text-primary">
+                            Action Mail Job Management
+                        </h4>
+
                         <div class="d-flex align-items-center gap-3">
+
                             <div class="text-end">
                                 <div><small class="text-muted">Total</small></div>
                                 <div id="counts-total" class="fw-bold">0</div>
                             </div>
+
                             <div class="text-end">
                                 <div><small class="text-muted">Active</small></div>
                                 <div id="counts-active" class="fw-bold">0</div>
                             </div>
+
                             <div class="text-end">
                                 <div><small class="text-muted">Completed</small></div>
                                 <div id="counts-completed" class="fw-bold">0</div>
                             </div>
+
                         </div>
+
                     </div>
+
                 </div>
+
             </header>
 
             <main class="flex-grow-1 bg-light">
-                <div class="app-content container-fluid px-4 py-4">
+
+                <div class="container-fluid px-4 py-4">
+
                     @RenderBody()
+
                 </div>
+
             </main>
 
             <footer class="bg-white border-top py-3">
+
                 <div class="container-fluid px-4">
+
                     <div class="text-center text-muted small">
-                        &copy; 2026 Action Mail Job Management - All Rights Reserved
+
+                        © 2026 Action Mail Job Management
+
                     </div>
+
                 </div>
+
             </footer>
+
         </div>
+
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
+
 </html>

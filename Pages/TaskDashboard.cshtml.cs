@@ -1,4 +1,5 @@
 using JobEntryApp.Models;
+using JobEntryApp.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -332,11 +333,11 @@ namespace JobEntryApp.Pages
             {
                 Tasks.Add(new TaskDashboardItem
                 {
-                    TaskId = reader.GetInt32(0),
-                    JobNumber = reader.GetInt32(1),
+                    TaskId = reader.GetGuid(0),
+                    JobNumber = SqlReaderValue.ReadInt32(reader, 1),
                     JobName = reader.IsDBNull(2) ? "" : reader.GetString(2),
                     Customer = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                    TaskNumber = reader.GetInt32(4),
+                    TaskNumber = SqlReaderValue.ReadInt32(reader, 4),
                     TaskName = reader.GetString(5),
                     Stage = reader.IsDBNull(6) ? null : reader.GetString(6),
                     AssignedTo = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
@@ -437,7 +438,7 @@ namespace JobEntryApp.Pages
 
         private static JobSummary ReadJobSummary(SqlDataReader reader) => new JobSummary
         {
-            JobNumber      = reader.GetInt32(0),
+            JobNumber      = SqlReaderValue.ReadInt32(reader, 0),
             JobName        = reader.IsDBNull(1) ? "" : reader.GetString(1),
             Customer       = reader.IsDBNull(2) ? "" : reader.GetString(2),
             Csr            = reader.IsDBNull(3) ? null : reader.GetString(3),
@@ -445,12 +446,12 @@ namespace JobEntryApp.Pages
             Status         = reader.IsDBNull(5) ? "" : reader.GetString(5),
             StartDate      = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
             MailDate       = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-            PendingTaskCount = reader.GetInt32(8)
+            PendingTaskCount = SqlReaderValue.ReadInt32(reader, 8)
         };
 
-        public IActionResult OnPostCompleteTask(int taskId)
+        public IActionResult OnPostCompleteTask(Guid taskId)
         {
-            if (taskId <= 0)
+            if (taskId == Guid.Empty)
             {
                 StatusMessage = "Invalid task id.";
                 return RedirectToPage(new { FilterAssignee, FilterDateRange, FilterStatus, ExcludeMailedJobs, FilterStage, FilterTaskSearch, FilterDp, Page });
@@ -484,9 +485,9 @@ namespace JobEntryApp.Pages
             return RedirectToPage(new { FilterAssignee, FilterDateRange, FilterStatus, ExcludeMailedJobs, FilterStage, FilterTaskSearch, FilterDp, Page });
         }
 
-        public IActionResult OnPostUncompleteTask(int taskId)
+        public IActionResult OnPostUncompleteTask(Guid taskId)
         {
-            if (taskId <= 0)
+            if (taskId == Guid.Empty)
             {
                 StatusMessage = "Invalid task id.";
                 return RedirectToPage(new { FilterAssignee, FilterDateRange, FilterStatus, ExcludeMailedJobs, FilterStage, FilterTaskSearch, FilterDp, Page });
@@ -522,7 +523,7 @@ namespace JobEntryApp.Pages
 
         public class TaskDashboardItem
         {
-            public int TaskId { get; set; }
+            public Guid TaskId { get; set; }
             public int JobNumber { get; set; }
             public string JobName { get; set; } = string.Empty;
             public string Customer { get; set; } = string.Empty;

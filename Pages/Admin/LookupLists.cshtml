@@ -1,0 +1,165 @@
+@page
+@model JobEntryApp.Pages.Admin.LookupListsModel
+@{
+    ViewData["Title"] = "Admin – Lookup Lists";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Lookup Lists</h1>
+    <small class="text-muted">Manage dropdown values for Customers, CSR, Data Processing, Sales, and Sub-Accounts</small>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @Model.StatusMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="row g-4">
+
+    @* ── Customers ── *@
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Customers</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddCustomer" class="d-flex gap-2 mb-3">
+                    <input name="name" class="form-control form-control-sm" placeholder="New customer name" required />
+                    <button class="btn btn-sm btn-primary">Add</button>
+                </form>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.Customers)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                            @item.Name
+                            <form method="post" asp-page-handler="DeleteCustomer" class="mb-0">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger py-0">×</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* ── Sub Accounts ── *@
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Sub Accounts</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddSubAccount" class="row g-2 mb-3">
+                    <div class="col">
+                        <select name="customerName" class="form-select form-select-sm" required>
+                            <option value="">-- Customer --</option>
+                            @foreach (var c in Model.Customers)
+                            {
+                                <option value="@c.Name">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input name="subAccountName" class="form-control form-control-sm" placeholder="Sub account name" required />
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-primary">Add</button>
+                    </div>
+                </form>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.SubAccounts)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                            <span><small class="text-muted me-1">@item.CustomerName</small>@item.Name</span>
+                            <form method="post" asp-page-handler="DeleteSubAccount" class="mb-0">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger py-0">×</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* ── CSR ── *@
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">CSR</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddCsr" class="d-flex gap-2 mb-3">
+                    <input name="name" class="form-control form-control-sm" placeholder="CSR name" required />
+                    <button class="btn btn-sm btn-primary">Add</button>
+                </form>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.CsrList)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                            @item.Name
+                            <form method="post" asp-page-handler="DeleteCsr" class="mb-0">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger py-0">×</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* ── Data Processing ── *@
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Data Processing</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddDataProcessing" class="d-flex gap-2 mb-3">
+                    <input name="name" class="form-control form-control-sm" placeholder="Data processing name" required />
+                    <button class="btn btn-sm btn-primary">Add</button>
+                </form>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.DataProcessingList)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                            @item.Name
+                            <form method="post" asp-page-handler="DeleteDataProcessing" class="mb-0">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger py-0">×</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* ── Sales ── *@
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Sales</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddSales" class="d-flex gap-2 mb-3">
+                    <input name="name" class="form-control form-control-sm" placeholder="Sales name" required />
+                    <button class="btn btn-sm btn-primary">Add</button>
+                </form>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.SalesList)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                            @item.Name
+                            <form method="post" asp-page-handler="DeleteSales" class="mb-0">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger py-0">×</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>

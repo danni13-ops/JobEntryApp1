@@ -1,3 +1,4 @@
+using JobEntryApp.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -32,7 +33,7 @@ namespace JobEntryApp.Pages.Jobs
 
         public IActionResult OnGet()
         {
-            LoadJobs();
+            LoadJobs(Jobs);
 
             if (ExportCsv)
             {
@@ -122,7 +123,7 @@ namespace JobEntryApp.Pages.Jobs
             return totalDeleted;
         }
 
-        private void LoadJobs()
+        private void LoadJobs(List<JobListItem> list1)
         {
             var cs = _config.GetConnectionString("JobEntryDb");
             if (string.IsNullOrWhiteSpace(cs))
@@ -159,15 +160,15 @@ namespace JobEntryApp.Pages.Jobs
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                list.Add(new JobListItem
+                list1.Add(new JobListItem
                 {
-                    JobNumber = reader.GetInt32(0),
+                    JobNumber = SqlReaderValue.ReadInt32(reader, 0),
                     JobName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                     Status = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
                     MailDate = reader.IsDBNull(3) ? (DateTime?)null : reader.GetDateTime(3),
                     Csr = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                     DataProcessing = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                    Quantity = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                    Quantity = reader.IsDBNull(6) ? 0 : SqlReaderValue.ReadInt32(reader, 6),
                     PostageStyle = reader.IsDBNull(7) ? string.Empty : reader.GetString(7)
                 });
             }

@@ -8,23 +8,24 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// Initialize database constraints / performance
 DatabaseInitializer.EnsurePerformanceAndConstraints(app.Configuration, app.Logger);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-    app.UseHttpsRedirection();
+	app.UseExceptionHandler("/Error");
+	app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();   // required for css/js/images
 
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 
 app.Run();

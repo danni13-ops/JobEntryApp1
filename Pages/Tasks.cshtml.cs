@@ -1,3 +1,4 @@
+using JobEntryApp.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -22,6 +23,8 @@ public class TasksModel : PageModel
         public string JobStatus { get; set; } = string.Empty;
 
         public List<TaskItem> Tasks { get; set; } = new();
+        public bool CanUpdateTaskStatus { get; set; }
+        public bool CanEditTaskNotes { get; set; }
 
         [TempData]
         public string? StatusMessage { get; set; }
@@ -33,14 +36,15 @@ public class TasksModel : PageModel
 
             JobNumber = jobNumber;
             LoadJobInfo();
+            SyncFolderAutomation();
             LoadTasks();
 
             return Page();
         }
 
-        public IActionResult OnPostCompleteTask(int taskId, int jobNumber)
+        public IActionResult OnPostCompleteTask(Guid taskId, int jobNumber)
         {
-            if (taskId <= 0 || jobNumber <= 0)
+            if (taskId == Guid.Empty || jobNumber <= 0)
             {
                 StatusMessage = "Invalid task update request.";
                 return RedirectToPage(new { jobNumber });
@@ -53,14 +57,30 @@ public class TasksModel : PageModel
             {
                 using var conn = new SqlConnection(cs);
                 conn.Open();
+                var tasksTable = GetTasksTable(conn);
+                var taskColumns = DatabaseSchema.GetColumns(conn, tasksTable);
+                var taskIdColumn = FindTaskKeyColumn(taskColumns);
+                var statusColumn = DatabaseSchema.FindColumn(taskColumns, "Status", "status");
+                if (taskIdColumn is null || statusColumn is null)
+                {
+                    StatusMessage = "This Tasks table does not support task status updates.";
+                    return RedirectToPage(new { jobNumber });
+                }
+
+                var completedDateColumn = DatabaseSchema.FindColumn(taskColumns, "CompletedDate", "completed_date");
 
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    UPDATE dbo.Tasks 
-                    SET Status = 'Completed', 
-                        CompletedDate = GETDATE()
-                    WHERE TaskId = @TaskId
-                      AND JobNumber = @JobNumber;";
+                var setClauses = new List<string> { $"[{statusColumn}] = 'Completed'" };
+                if (completedDateColumn is not null)
+                {
+                    setClauses.Add($"[{completedDateColumn}] = GETDATE()");
+                }
+
+                cmd.CommandText = $@"
+                    UPDATE {tasksTable.SqlName}
+                    SET {string.Join(", ", setClauses)}
+                    WHERE [{taskIdColumn}] = @TaskId
+                      AND [JobNumber] = @JobNumber;";
 
                 cmd.Parameters.AddWithValue("@TaskId", taskId);
                 cmd.Parameters.AddWithValue("@JobNumber", jobNumber);
@@ -79,9 +99,9 @@ public class TasksModel : PageModel
             return RedirectToPage(new { jobNumber });
         }
 
-        public IActionResult OnPostUncompleteTask(int taskId, int jobNumber)
+        public IActionResult OnPostUncompleteTask(Guid taskId, int jobNumber)
         {
-            if (taskId <= 0 || jobNumber <= 0)
+            if (taskId == Guid.Empty || jobNumber <= 0)
             {
                 StatusMessage = "Invalid task update request.";
                 return RedirectToPage(new { jobNumber });
@@ -94,14 +114,30 @@ public class TasksModel : PageModel
             {
                 using var conn = new SqlConnection(cs);
                 conn.Open();
+                var tasksTable = GetTasksTable(conn);
+                var taskColumns = DatabaseSchema.GetColumns(conn, tasksTable);
+                var taskIdColumn = FindTaskKeyColumn(taskColumns);
+                var statusColumn = DatabaseSchema.FindColumn(taskColumns, "Status", "status");
+                if (taskIdColumn is null || statusColumn is null)
+                {
+                    StatusMessage = "This Tasks table does not support task status updates.";
+                    return RedirectToPage(new { jobNumber });
+                }
+
+                var completedDateColumn = DatabaseSchema.FindColumn(taskColumns, "CompletedDate", "completed_date");
 
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    UPDATE dbo.Tasks 
-                    SET Status = 'Scheduled', 
-                        CompletedDate = NULL
-                    WHERE TaskId = @TaskId
-                      AND JobNumber = @JobNumber;";
+                var setClauses = new List<string> { $"[{statusColumn}] = 'Scheduled'" };
+                if (completedDateColumn is not null)
+                {
+                    setClauses.Add($"[{completedDateColumn}] = NULL");
+                }
+
+                cmd.CommandText = $@"
+                    UPDATE {tasksTable.SqlName}
+                    SET {string.Join(", ", setClauses)}
+                    WHERE [{taskIdColumn}] = @TaskId
+                      AND [JobNumber] = @JobNumber;";
 
                 cmd.Parameters.AddWithValue("@TaskId", taskId);
                 cmd.Parameters.AddWithValue("@JobNumber", jobNumber);
@@ -120,9 +156,9 @@ public class TasksModel : PageModel
             return RedirectToPage(new { jobNumber });
         }
 
-        public IActionResult OnPostUpdateNotes(int taskId, int jobNumber, string notes)
+        public IActionResult OnPostUpdateNotes(Guid taskId, int jobNumber, string notes)
         {
-            if (taskId <= 0 || jobNumber <= 0)
+            if (taskId == Guid.Empty || jobNumber <= 0)
             {
                 StatusMessage = "Invalid notes update request.";
                 return RedirectToPage(new { jobNumber });
@@ -142,13 +178,22 @@ public class TasksModel : PageModel
             {
                 using var conn = new SqlConnection(cs);
                 conn.Open();
+                var tasksTable = GetTasksTable(conn);
+                var taskColumns = DatabaseSchema.GetColumns(conn, tasksTable);
+                var taskIdColumn = FindTaskKeyColumn(taskColumns);
+                var notesColumn = DatabaseSchema.FindColumn(taskColumns, "Notes", "notes");
+                if (taskIdColumn is null || notesColumn is null)
+                {
+                    StatusMessage = "This Tasks table does not support notes.";
+                    return RedirectToPage(new { jobNumber });
+                }
 
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    UPDATE dbo.Tasks 
-                    SET Notes = @Notes
-                    WHERE TaskId = @TaskId
-                      AND JobNumber = @JobNumber;";
+                cmd.CommandText = $@"
+                    UPDATE {tasksTable.SqlName}
+                    SET [{notesColumn}] = @Notes
+                    WHERE [{taskIdColumn}] = @TaskId
+                      AND [JobNumber] = @JobNumber;";
 
                 cmd.Parameters.AddWithValue("@TaskId", taskId);
                 cmd.Parameters.AddWithValue("@JobNumber", jobNumber);
@@ -201,27 +246,52 @@ public class TasksModel : PageModel
 
             using var conn = new SqlConnection(cs);
             conn.Open();
+            var tasksTable = GetTasksTable(conn);
+            var taskColumns = DatabaseSchema.GetColumns(conn, tasksTable);
+            var taskIdColumn = FindTaskKeyColumn(taskColumns);
+            CanUpdateTaskStatus = taskIdColumn is not null && DatabaseSchema.FindColumn(taskColumns, "Status", "status") is not null;
+            CanEditTaskNotes = taskIdColumn is not null && DatabaseSchema.FindColumn(taskColumns, "Notes", "notes") is not null;
+
+            var taskIdExpr = taskIdColumn is null ? "CAST(NULL AS uniqueidentifier)" : $"[{taskIdColumn}]";
+            var taskNumberExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS int)", "TaskNumber", "task_number");
+            var taskNameExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "TaskName", "task_name");
+            var stageExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "Stage", "stage");
+            var assignedToExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "AssignedTo", "assigned_to");
+            var assignee2Expr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "Assignee2", "assigned_to_2");
+            var dueDateExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS datetime2)", "DueDate", "due_date");
+            var dependenciesExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "Dependencies", "dependencies");
+            var statusExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "Status", "status");
+            var completedDateExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS datetime2)", "CompletedDate", "completed_date");
+            var notesExpr = SelectColumnOrNull(taskColumns, "CAST(NULL AS nvarchar(max))", "Notes", "notes");
 
             using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = @"
+            cmd.CommandText = $@"
                 SELECT 
-                    TaskId, TaskNumber, TaskName, Stage, AssignedTo, Assignee2,
-                    DueDate, Dependencies, Status, CompletedDate, Notes
-                FROM dbo.Tasks
-                WHERE JobNumber = @JobNumber
-                ORDER BY TaskNumber;";
+                    {taskIdExpr} AS [TaskId],
+                    {taskNumberExpr} AS [TaskNumber],
+                    {taskNameExpr} AS [TaskName],
+                    {stageExpr} AS [Stage],
+                    {assignedToExpr} AS [AssignedTo],
+                    {assignee2Expr} AS [Assignee2],
+                    {dueDateExpr} AS [DueDate],
+                    {dependenciesExpr} AS [Dependencies],
+                    {statusExpr} AS [Status],
+                    {completedDateExpr} AS [CompletedDate],
+                    {notesExpr} AS [Notes]
+                FROM {tasksTable.SqlName}
+                WHERE [JobNumber] = @JobNumber
+                ORDER BY CASE WHEN {taskNumberExpr} IS NULL THEN 1 ELSE 0 END, {taskNumberExpr}, {dueDateExpr};";
 
             cmd.Parameters.AddWithValue("@JobNumber", JobNumber);
 
             using SqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                var taskName = reader.GetString(2);
-                var milestoneNames = new[] { "Data Received", "Counts Approved", "Signoffs Due", "Signoffs Approved", "Production Out", "Mail Date" };
+                var taskName = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
                 Tasks.Add(new TaskItem
                 {
-                    TaskId = reader.GetInt32(0),
-                    TaskNumber = reader.GetInt32(1),
+                    TaskId = reader.IsDBNull(0) ? Guid.Empty : reader.GetGuid(0),
+                    TaskNumber = reader.IsDBNull(1) ? 0 : Convert.ToInt32(reader.GetValue(1)),
                     TaskName = taskName,
                     Stage = reader.IsDBNull(3) ? null : reader.GetString(3),
                     AssignedTo = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
@@ -231,14 +301,45 @@ public class TasksModel : PageModel
                     Status = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                     CompletedDate = reader.IsDBNull(9) ? null : reader.GetDateTime(9),
                     Notes = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    IsMilestone = milestoneNames.Contains(taskName)
+                    IsMilestone = TaskMilestoneCatalog.TryGetMilestone(taskName, out _)
                 });
             }
         }
 
+        private void SyncFolderAutomation()
+        {
+            var cs = _config.GetConnectionString("JobEntryDb")
+                ?? throw new InvalidOperationException("Missing connection string.");
+
+            try
+            {
+                using var conn = new SqlConnection(cs);
+                conn.Open();
+                var basePath = _config["JobFoldersBasePath"]?.Trim() ?? @"P:\Danielle\JOB FOLDERS";
+                JobFolderAutomationService.SyncJobArtifactsForJob(conn, basePath, JobNumber, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Folder automation sync skipped while loading tasks for job {JobNumber}.", JobNumber);
+            }
+        }
+
+        private static DatabaseTable GetTasksTable(SqlConnection conn)
+            => DatabaseSchema.FindTable(conn, null, "Tasks", "tasks")
+                ?? throw new InvalidOperationException("Could not find a Tasks table.");
+
+        private static string? FindTaskKeyColumn(ISet<string> columns)
+            => DatabaseSchema.FindColumn(columns, "TaskId", "task_id");
+
+        private static string SelectColumnOrNull(ISet<string> columns, string nullExpression, params string[] candidates)
+        {
+            var column = DatabaseSchema.FindColumn(columns, candidates);
+            return column is null ? nullExpression : $"[{column}]";
+        }
+
         public class TaskItem
         {
-            public int TaskId { get; set; }
+            public Guid TaskId { get; set; }
             public int TaskNumber { get; set; }
             public string TaskName { get; set; } = string.Empty;
             public string? Stage { get; set; }

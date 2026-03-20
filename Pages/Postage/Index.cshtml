@@ -1,0 +1,63 @@
+﻿@page
+@model JobEntryApp.Pages.Postage.IndexModel
+
+<h2>Postage Dashboard</h2>
+
+<h4>Stamp Orders Needed</h4>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Job #</th>
+            <th>Customer</th>
+            <th>Job Name</th>
+            <th>Mail Date</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var job in Model.StampJobs)
+        {
+            <tr>
+                <td>@job.JobNumber</td>
+                <td>@job.Customer</td>
+                <td>@job.JobName</td>
+                <td>@job.MailDate.ToShortDateString()</td>
+                <td>@job.Quantity</td>
+            </tr>
+        }
+
+    </tbody>
+</table>
+
+
+<h4>Permit / Indicia Funding</h4>
+
+<table class="table table-striped">
+
+    <thead>
+        <tr>
+            <th>Job #</th>
+            <th>Customer</th>
+            <th>Job Name</th>
+            <th>Mail Date</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var job in Model.PermitJobs)
+        {
+            <tr>
+                <td>@job.JobNumber</td>
+                <td>@job.Customer</td>
+                <td>@job.JobName</td>
+                <td>@job.MailDate.ToShortDateString()</td>
+                <td>@job.Quantity</td>
+            </tr>
+        }
+
+    </tbody>
+</table>

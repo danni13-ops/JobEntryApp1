@@ -85,7 +85,9 @@
         {
             <tr style="cursor:default">
                 <td><input type="checkbox" name="SelectedJobs" value="@job.JobNumber" class="rowCheckbox" /></td>
-                <td><a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber">@job.JobNumber</a></td>
+                <td><a asp-page="/Jobs/Details" asp-route-jobNumber="@job.JobNumber">
+                    @job.JobNumber
+                </a></td>
                 <td>@job.JobName</td>
                 <td>@job.Status</td>
                 <td>@job.MailDate?.ToString("MM/dd/yyyy")</td>
