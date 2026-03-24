@@ -22,6 +22,7 @@ namespace JobEntryApp.Pages
         public List<JobSummary> MailingSoonJobs { get; set; } = new();
 
         public List<TaskDashboardItem> Tasks { get; set; } = new();
+        public CalendarMonthViewModel? MasterCalendar { get; private set; }
         public List<string> Assignees { get; set; } = new();
         public List<string> Stages { get; set; } = new();
         public List<string> Statuses { get; set; } = new();
@@ -42,6 +43,12 @@ namespace JobEntryApp.Pages
         public string? FilterTaskSearch { get; set; }
 
         [BindProperty(SupportsGet = true)]
+        public string ViewMode { get; set; } = "list";
+
+        [BindProperty(SupportsGet = true)]
+        public string? CalendarMonth { get; set; }
+
+        [BindProperty(SupportsGet = true)]
         public string FilterDateRange { get; set; } = "thisweek";
 
         [BindProperty(SupportsGet = true)]
@@ -55,6 +62,9 @@ namespace JobEntryApp.Pages
 
         public int PageSize { get; set; } = 20;
         public int TotalCount { get; set; }
+        public string CalendarMonthLabel { get; private set; } = DateTime.Today.ToString("MMMM yyyy");
+        public string PreviousCalendarMonth { get; private set; } = DateTime.Today.AddMonths(-1).ToString("yyyy-MM");
+        public string NextCalendarMonth { get; private set; } = DateTime.Today.AddMonths(1).ToString("yyyy-MM");
 
         public List<TaskDashboardItem> UpcomingTasks =>
             Tasks.Where(t => t.DueDate >= DateTime.Today)
@@ -67,12 +77,14 @@ namespace JobEntryApp.Pages
 
         public void OnGet()
         {
+            ViewMode = string.IsNullOrWhiteSpace(ViewMode) ? "list" : ViewMode;
             LoadAssignees();
             LoadStagesAndStatuses();
             LoadDps();
             LoadCsrCounts();
             LoadDpCounts();
             LoadTasks();
+            LoadMasterCalendar();
             LoadSectionSummaries();
         }
 
@@ -187,99 +199,8 @@ namespace JobEntryApp.Pages
             using var conn = new SqlConnection(cs);
             conn.Open();
 
-            var whereConditions = new List<string>();
-            var parameters = new List<SqlParameter>();
-
-            if (!string.IsNullOrWhiteSpace(FilterAssignee))
-            {
-                whereConditions.Add("(t.AssignedTo = @Assignee OR t.Assignee2 = @Assignee)");
-                parameters.Add(new SqlParameter("@Assignee", FilterAssignee));
-            }
-
-            if (!string.IsNullOrWhiteSpace(FilterDp))
-            {
-                whereConditions.Add("j.DataProcessing = @Dp");
-                parameters.Add(new SqlParameter("@Dp", FilterDp));
-            }
-
-            if (!string.IsNullOrWhiteSpace(FilterStage))
-            {
-                whereConditions.Add("t.Stage = @Stage");
-                parameters.Add(new SqlParameter("@Stage", FilterStage));
-            }
-
-            if (!string.IsNullOrWhiteSpace(FilterTaskSearch))
-            {
-                whereConditions.Add("(t.TaskName LIKE @TaskSearch OR j.JobName LIKE @TaskSearch)");
-                parameters.Add(new SqlParameter("@TaskSearch", $"%{FilterTaskSearch}%"));
-            }
-
-            if (FilterDateRange == "overdue")
-            {
-                whereConditions.Add("t.DueDate < @Today AND t.Status != 'Completed'");
-                parameters.Add(new SqlParameter("@Today", DateTime.Today));
-            }
-            else if (FilterDateRange == "today")
-            {
-                whereConditions.Add("CAST(t.DueDate AS DATE) = @Today");
-                parameters.Add(new SqlParameter("@Today", DateTime.Today));
-            }
-            else if (FilterDateRange == "thisweek")
-            {
-                DateTime endOfWeek = DateTime.Today.AddDays(7);
-                whereConditions.Add("t.DueDate BETWEEN @Today AND @EndOfWeek");
-                parameters.Add(new SqlParameter("@Today", DateTime.Today));
-                parameters.Add(new SqlParameter("@EndOfWeek", endOfWeek));
-            }
-            else if (FilterDateRange == "nextweek")
-            {
-                DateTime startNextWeek = DateTime.Today.AddDays(8);
-                DateTime endNextWeek = DateTime.Today.AddDays(14);
-                whereConditions.Add("t.DueDate BETWEEN @StartNextWeek AND @EndNextWeek");
-                parameters.Add(new SqlParameter("@StartNextWeek", startNextWeek));
-                parameters.Add(new SqlParameter("@EndNextWeek", endNextWeek));
-            }
-
-            if (FilterStatus == "active")
-            {
-                whereConditions.Add("t.Status != 'Completed'");
-            }
-            else if (FilterStatus == "completed")
-            {
-                whereConditions.Add("t.Status = 'Completed'");
-            }
-
-            if (ExcludeMailedJobs)
-            {
-                whereConditions.Add(@"
-                    (j.MailDate IS NULL OR j.MailDate >= @Today OR 
-                     NOT EXISTS (
-                         SELECT 1 FROM dbo.MailChart mc 
-                         WHERE mc.JobNumber = j.JobNumber 
-                         AND mc.MailDate < @Today
-                     ))
-                ");
-                if (!parameters.Any(p => p.ParameterName == "@Today"))
-                {
-                    parameters.Add(new SqlParameter("@Today", DateTime.Today));
-                }
-            }
-
-            var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
-
-            static SqlParameter CloneParameter(SqlParameter p)
-            {
-                var clone = new SqlParameter(p.ParameterName, p.SqlDbType)
-                {
-                    Value = p.Value,
-                    Direction = p.Direction,
-                    IsNullable = p.IsNullable,
-                    Size = p.Size,
-                    Precision = p.Precision,
-                    Scale = p.Scale
-                };
-                return clone;
-            }
+            var (whereConditions, parameters) = BuildTaskFilterParts(applyDateRangeFilter: true);
+            var whereClause = BuildWhereClause(whereConditions);
 
             using (SqlCommand countCmd = conn.CreateCommand())
             {
@@ -350,6 +271,200 @@ namespace JobEntryApp.Pages
                     JobStartDate = reader.IsDBNull(14) ? null : reader.GetDateTime(14)
                 });
             }
+        }
+
+        private void LoadMasterCalendar()
+        {
+            var monthStart = ParseCalendarMonth(CalendarMonth);
+            CalendarMonth = monthStart.ToString("yyyy-MM");
+            CalendarMonthLabel = monthStart.ToString("MMMM yyyy");
+            PreviousCalendarMonth = monthStart.AddMonths(-1).ToString("yyyy-MM");
+            NextCalendarMonth = monthStart.AddMonths(1).ToString("yyyy-MM");
+
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var gridStart = monthStart.AddDays(-(int)monthStart.DayOfWeek);
+            var gridEndExclusive = monthEnd.AddDays(7 - (int)monthEnd.DayOfWeek);
+
+            var cs = _config.GetConnectionString("JobEntryDb")
+                ?? throw new InvalidOperationException("Missing connection string.");
+
+            using var conn = new SqlConnection(cs);
+            conn.Open();
+
+            var (whereConditions, parameters) = BuildTaskFilterParts(applyDateRangeFilter: false);
+            whereConditions.Add("t.DueDate >= @CalendarStart");
+            whereConditions.Add("t.DueDate < @CalendarEndExclusive");
+            parameters.Add(new SqlParameter("@CalendarStart", gridStart));
+            parameters.Add(new SqlParameter("@CalendarEndExclusive", gridEndExclusive));
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $@"
+                SELECT
+                    t.JobNumber,
+                    j.JobName,
+                    t.TaskNumber,
+                    t.TaskName,
+                    t.DueDate,
+                    t.Status
+                FROM dbo.Tasks t
+                INNER JOIN dbo.Jobs j ON t.JobNumber = j.JobNumber
+                {BuildWhereClause(whereConditions)}
+                ORDER BY t.DueDate, t.JobNumber, t.TaskNumber;";
+            if (parameters.Count > 0)
+            {
+                cmd.Parameters.AddRange(parameters.Select(CloneParameter).ToArray());
+            }
+
+            var events = new List<CalendarEventInput>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (reader.IsDBNull(4))
+                {
+                    continue;
+                }
+
+                var taskName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+                if (!TaskMilestoneCatalog.TryGetMilestone(taskName, out var milestone))
+                {
+                    continue;
+                }
+
+                var jobNumber = SqlReaderValue.ReadInt32(reader, 0);
+                var jobName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                var taskNumber = reader.IsDBNull(2) ? int.MaxValue : SqlReaderValue.ReadInt32(reader, 2);
+                var dueDate = reader.GetDateTime(4).Date;
+                var status = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+                var isCompleted = string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
+
+                events.Add(new CalendarEventInput
+                {
+                    Date = dueDate,
+                    Title = $"{milestone.Label} · {jobNumber}",
+                    Subtitle = string.IsNullOrWhiteSpace(jobName) ? $"Job {jobNumber}" : jobName,
+                    Url = $"/Jobs/Details?jobNumber={jobNumber}",
+                    CssClass = isCompleted ? "calendar-event-complete" : milestone.CssClass,
+                    IsCompleted = isCompleted,
+                    IsMilestone = true,
+                    SortOrder = taskNumber
+                });
+            }
+
+            MasterCalendar = CalendarBuilder.BuildMonth(monthStart, events, compact: false, maxItemsPerDay: 5);
+        }
+
+        private (List<string> Conditions, List<SqlParameter> Parameters) BuildTaskFilterParts(bool applyDateRangeFilter)
+        {
+            var whereConditions = new List<string>();
+            var parameters = new List<SqlParameter>();
+
+            if (!string.IsNullOrWhiteSpace(FilterAssignee))
+            {
+                whereConditions.Add("(t.AssignedTo = @Assignee OR t.Assignee2 = @Assignee)");
+                parameters.Add(new SqlParameter("@Assignee", FilterAssignee));
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterDp))
+            {
+                whereConditions.Add("j.DataProcessing = @Dp");
+                parameters.Add(new SqlParameter("@Dp", FilterDp));
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterStage))
+            {
+                whereConditions.Add("t.Stage = @Stage");
+                parameters.Add(new SqlParameter("@Stage", FilterStage));
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterTaskSearch))
+            {
+                whereConditions.Add("(t.TaskName LIKE @TaskSearch OR j.JobName LIKE @TaskSearch)");
+                parameters.Add(new SqlParameter("@TaskSearch", $"%{FilterTaskSearch}%"));
+            }
+
+            if (applyDateRangeFilter)
+            {
+                if (FilterDateRange == "overdue")
+                {
+                    whereConditions.Add("t.DueDate < @Today AND t.Status != 'Completed'");
+                    parameters.Add(new SqlParameter("@Today", DateTime.Today));
+                }
+                else if (FilterDateRange == "today")
+                {
+                    whereConditions.Add("CAST(t.DueDate AS DATE) = @Today");
+                    parameters.Add(new SqlParameter("@Today", DateTime.Today));
+                }
+                else if (FilterDateRange == "thisweek")
+                {
+                    var endOfWeek = DateTime.Today.AddDays(7);
+                    whereConditions.Add("t.DueDate BETWEEN @Today AND @EndOfWeek");
+                    parameters.Add(new SqlParameter("@Today", DateTime.Today));
+                    parameters.Add(new SqlParameter("@EndOfWeek", endOfWeek));
+                }
+                else if (FilterDateRange == "nextweek")
+                {
+                    var startNextWeek = DateTime.Today.AddDays(8);
+                    var endNextWeek = DateTime.Today.AddDays(14);
+                    whereConditions.Add("t.DueDate BETWEEN @StartNextWeek AND @EndNextWeek");
+                    parameters.Add(new SqlParameter("@StartNextWeek", startNextWeek));
+                    parameters.Add(new SqlParameter("@EndNextWeek", endNextWeek));
+                }
+            }
+
+            if (FilterStatus == "active")
+            {
+                whereConditions.Add("t.Status != 'Completed'");
+            }
+            else if (FilterStatus == "completed")
+            {
+                whereConditions.Add("t.Status = 'Completed'");
+            }
+
+            if (ExcludeMailedJobs)
+            {
+                whereConditions.Add(@"
+                    (j.MailDate IS NULL OR j.MailDate >= @Today OR 
+                     NOT EXISTS (
+                         SELECT 1 FROM dbo.MailChart mc 
+                         WHERE mc.JobNumber = j.JobNumber 
+                         AND mc.MailDate < @Today
+                     ))
+                ");
+                if (!parameters.Any(p => p.ParameterName == "@Today"))
+                {
+                    parameters.Add(new SqlParameter("@Today", DateTime.Today));
+                }
+            }
+
+            return (whereConditions, parameters);
+        }
+
+        private static string BuildWhereClause(List<string> whereConditions)
+            => whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : string.Empty;
+
+        private static SqlParameter CloneParameter(SqlParameter p)
+        {
+            var clone = new SqlParameter(p.ParameterName, p.SqlDbType)
+            {
+                Value = p.Value,
+                Direction = p.Direction,
+                IsNullable = p.IsNullable,
+                Size = p.Size,
+                Precision = p.Precision,
+                Scale = p.Scale
+            };
+            return clone;
+        }
+
+        private static DateTime ParseCalendarMonth(string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value)
+                && DateTime.TryParse($"{value}-01", out var parsed))
+            {
+                return new DateTime(parsed.Year, parsed.Month, 1);
+            }
+
+            return new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         }
 
         private void LoadSectionSummaries()

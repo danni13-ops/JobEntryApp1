@@ -2,8 +2,7 @@
 @model JobEntryApp.Pages.TaskDashboardModel
 @{
     ViewData["Title"] = "Production Dashboard";
-    var viewMode = Request.Query["ViewMode"].ToString();
-    if (string.IsNullOrEmpty(viewMode)) { viewMode = "list"; }
+    var viewMode = Model.ViewMode;
 
     // Build a base query string that preserves existing filters for view mode switches
     var filterParams = new System.Text.StringBuilder();
@@ -12,6 +11,7 @@
     if (!string.IsNullOrEmpty(Model.FilterStage)) filterParams.Append($"&FilterStage={Uri.EscapeDataString(Model.FilterStage)}");
     if (!string.IsNullOrEmpty(Model.FilterTaskSearch)) filterParams.Append($"&FilterTaskSearch={Uri.EscapeDataString(Model.FilterTaskSearch)}");
     if (!string.IsNullOrEmpty(Model.FilterStatus)) filterParams.Append($"&FilterStatus={Uri.EscapeDataString(Model.FilterStatus)}");
+    if (!string.IsNullOrEmpty(Model.CalendarMonth)) filterParams.Append($"&CalendarMonth={Uri.EscapeDataString(Model.CalendarMonth)}");
     if (Model.ExcludeMailedJobs) filterParams.Append("&ExcludeMailedJobs=true");
     var filters = filterParams.ToString();
 }
@@ -139,6 +139,10 @@
 
         <form method="get" class="row g-3">
             <input type="hidden" name="ViewMode" value="@viewMode" />
+            @if (!string.IsNullOrWhiteSpace(Model.CalendarMonth))
+            {
+                <input type="hidden" name="CalendarMonth" value="@Model.CalendarMonth" />
+            }
             <div class="col-12">
                 <input name="FilterTaskSearch" value="@Model.FilterTaskSearch" class="form-control" placeholder="Search tasks or jobs..." />
             </div>
@@ -270,7 +274,20 @@
             }
             else if (viewMode == "calendar")
             {
-                <partial name="/Pages/Jobs/_MiniCalendar.cshtml" />
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="?ViewMode=calendar&CalendarMonth=@Model.PreviousCalendarMonth@(filters)" class="btn btn-sm btn-outline-secondary">Previous Month</a>
+                    <div class="fw-semibold">@Model.CalendarMonthLabel</div>
+                    <a href="?ViewMode=calendar&CalendarMonth=@Model.NextCalendarMonth@(filters)" class="btn btn-sm btn-outline-secondary">Next Month</a>
+                </div>
+
+                <div class="mb-3 text-muted small">
+                    Master calendar shows milestone dates across all matching jobs for the selected month.
+                </div>
+
+                @if (Model.MasterCalendar is not null)
+                {
+                    <partial name="/Pages/Shared/_CalendarMonth.cshtml" model="Model.MasterCalendar" />
+                }
             }
             else
             {

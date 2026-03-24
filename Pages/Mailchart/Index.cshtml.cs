@@ -34,6 +34,7 @@ namespace JobEntryApp.Pages.Mailchart
 
         public void OnGet()
         {
+            SyncVisibleJobs();
             LoadMailChart();
         }
 
@@ -199,6 +200,69 @@ namespace JobEntryApp.Pages.Mailchart
             }
 
             return value.Trim();
+        }
+
+        private void SyncVisibleJobs()
+        {
+            var cs = _config.GetConnectionString("JobEntryDb")
+                ?? throw new InvalidOperationException("Missing connection string 'JobEntryDb'.");
+
+            try
+            {
+                using var conn = new SqlConnection(cs);
+                conn.Open();
+
+                var basePath = _config["JobFoldersBasePath"]?.Trim() ?? @"P:\Danielle\JOB FOLDERS";
+                foreach (var jobNumber in LoadVisibleJobNumbers(conn))
+                {
+                    JobFolderAutomationService.SyncJobArtifactsForJob(conn, basePath, jobNumber, _logger);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "MailChart folder automation sync skipped.");
+            }
+        }
+
+        private List<int> LoadVisibleJobNumbers(SqlConnection conn)
+        {
+            using var cmd = conn.CreateCommand();
+
+            var where = new List<string>
+            {
+                "CAST(MailDate AS date) >= @today"
+            };
+            cmd.Parameters.AddWithValue("@today", Today);
+
+            if (!string.IsNullOrWhiteSpace(Search))
+            {
+                where.Add("(JobName LIKE @search OR Customer LIKE @search OR CAST(JobNumber AS nvarchar(20)) LIKE @search OR CAST(Kit AS nvarchar(20)) LIKE @search)");
+                cmd.Parameters.AddWithValue("@search", $"%{Search}%");
+            }
+
+            if (!string.IsNullOrWhiteSpace(CsrFilter) && CsrFilter != "All")
+            {
+                where.Add("AE = @csr");
+                cmd.Parameters.AddWithValue("@csr", CsrFilter);
+            }
+
+            cmd.CommandText = $@"
+                SELECT DISTINCT JobNumber
+                FROM dbo.MailChart
+                WHERE {string.Join(" AND ", where)}
+                ORDER BY JobNumber;";
+
+            var jobNumbers = new List<int>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (!reader.IsDBNull(0))
+                {
+                    jobNumbers.Add(SqlReaderValue.ReadInt32(reader, 0));
+                }
+            }
+
+            return jobNumbers;
         }
 
         private void LoadMailChart()

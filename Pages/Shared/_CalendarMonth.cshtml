@@ -1,0 +1,73 @@
+@using JobEntryApp.Infrastructure
+@model JobEntryApp.Models.CalendarMonthViewModel
+
+<div class="task-calendar @(Model.Compact ? "task-calendar-compact" : "task-calendar-full")">
+    <div class="task-calendar-title">@Model.Title</div>
+    <table class="table table-bordered task-calendar-table mb-0">
+        <thead>
+            <tr>
+                @foreach (var dayHeader in CalendarBuilder.DayHeaders)
+                {
+                    <th>@dayHeader</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var week in Model.Weeks)
+            {
+                <tr>
+                    @foreach (var day in week.Days)
+                    {
+                        var cellClasses = "task-calendar-day";
+                        if (!day.IsCurrentMonth)
+                        {
+                            cellClasses += " is-outside";
+                        }
+                        if (day.IsToday)
+                        {
+                            cellClasses += " is-today";
+                        }
+
+                        <td class="@cellClasses">
+                            <div class="task-calendar-date">@day.Date.Day</div>
+                            <div class="task-calendar-events">
+                                @foreach (var calendarEvent in day.Events)
+                                {
+                                    var title = string.IsNullOrWhiteSpace(calendarEvent.Subtitle)
+                                        ? calendarEvent.Title
+                                        : $"{calendarEvent.Title} - {calendarEvent.Subtitle}";
+
+                                    if (string.IsNullOrWhiteSpace(calendarEvent.Url))
+                                    {
+                                        <div class="task-calendar-event @calendarEvent.CssClass" title="@title">
+                                            <span class="task-calendar-event-title">@calendarEvent.Title</span>
+                                            @if (!Model.Compact && !string.IsNullOrWhiteSpace(calendarEvent.Subtitle))
+                                            {
+                                                <span class="task-calendar-event-subtitle">@calendarEvent.Subtitle</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <a href="@calendarEvent.Url" class="task-calendar-event @calendarEvent.CssClass" title="@title">
+                                            <span class="task-calendar-event-title">@calendarEvent.Title</span>
+                                            @if (!Model.Compact && !string.IsNullOrWhiteSpace(calendarEvent.Subtitle))
+                                            {
+                                                <span class="task-calendar-event-subtitle">@calendarEvent.Subtitle</span>
+                                            }
+                                        </a>
+                                    }
+                                }
+                            </div>
+
+                            @if (day.OverflowCount > 0)
+                            {
+                                <div class="task-calendar-overflow">+@day.OverflowCount more</div>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

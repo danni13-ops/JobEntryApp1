@@ -32,9 +32,6 @@ else
                 View Tasks
             </a>
         </div>
-
-    <!-- Mini Calendar for this job -->
-    @await Html.PartialAsync("/Pages/Jobs/_MiniCalendar.cshtml")
     </div>
 
     <div class="row">
@@ -126,6 +123,31 @@ else
                         }
                     </div>
 
+                    <div class="mb-2 d-flex flex-wrap gap-2">
+                        @if (Model.FolderSync.DataFilesDetected)
+                        {
+                            <span class="badge bg-info text-dark">Data File Detected</span>
+                        }
+
+                        @if (Model.FolderSync.CountsWorkbook is not null)
+                        {
+                            <span class="badge bg-warning text-dark">Counts Loaded</span>
+                            @if (Model.FolderSync.MailChartRowsTouched > 0)
+                            {
+                                <span class="badge bg-primary">MailChart Updated</span>
+                            }
+                        }
+                    </div>
+
+                    @if (Model.FolderSync.CountsWorkbook is not null)
+                    {
+                        <div class="small mb-2">
+                            <div class="text-muted">Counts File</div>
+                            <div class="fw-semibold">@Model.FolderSync.CountsWorkbook.SourceFileName</div>
+                            <div class="text-muted">Total Quantity: @Model.FolderSync.CountsWorkbook.TotalQuantity.ToString("N0")</div>
+                        </div>
+                    }
+
                     <div class="small text-muted mb-1">Standard subfolders</div>
                     <ul class="list-unstyled small mb-0">
                         @foreach (var folder in JobEntryApp.Infrastructure.JobFolderService.StandardSubfolders)
@@ -135,6 +157,30 @@ else
                     </ul>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="bi bi-calendar3 me-1"></i>Task Calendar</span>
+            <a asp-page="/Tasks" asp-route-jobNumber="@Model.Job.JobNumber" class="btn btn-sm btn-outline-primary">Open Full Task List</a>
+        </div>
+        <div class="card-body">
+            @if (!Model.JobCalendars.Any())
+            {
+                <p class="text-muted small mb-0">No scheduled task dates are available for this job yet.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var calendar in Model.JobCalendars)
+                    {
+                        <div class="col-lg-6 col-xl-4">
+                            <partial name="/Pages/Shared/_CalendarMonth.cshtml" model="calendar" />
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 
