@@ -1,7 +1,7 @@
+using Microsoft.Data.SqlClient;
 using JobEntryApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Data.SqlClient;
 
 namespace JobEntryApp.Pages
 {
@@ -66,13 +66,32 @@ namespace JobEntryApp.Pages
 
         public void OnGet()
         {
-            LoadAssignees();
-            LoadStagesAndStatuses();
-            LoadDps();
-            LoadCsrCounts();
-            LoadDpCounts();
-            LoadTasks();
-            LoadSectionSummaries();
+            try
+            {
+                LoadAssignees();
+                LoadStagesAndStatuses();
+                LoadDps();
+                LoadCsrCounts();
+                LoadDpCounts();
+                LoadTasks();
+                LoadSectionSummaries();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Production dashboard could not load because the database is unavailable.");
+                StatusMessage = "The database is unavailable right now, so production data could not be loaded.";
+                DataProcessingJobs = new List<JobSummary>();
+                ReadyForProductionJobs = new List<JobSummary>();
+                MailingSoonJobs = new List<JobSummary>();
+                Tasks = new List<TaskDashboardItem>();
+                Assignees = new List<string>();
+                Stages = new List<string>();
+                Statuses = new List<string>();
+                Dps = new List<string>();
+                CsrTaskCounts = new Dictionary<string, int>();
+                DpJobCounts = new Dictionary<string, int>();
+                TotalCount = 0;
+            }
         }
 
         private void LoadAssignees()

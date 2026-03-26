@@ -6,14 +6,15 @@ namespace JobEntryApp.Models
     {
         public int JobNumber { get; set; }
 
-        [Required(ErrorMessage = "Job Name is required.")]
-        public string JobName { get; set; } = string.Empty;
+        public string? Customer { get; set; }
+        public string? JobName { get; set; }
 
+        public DateTime? DataDueDate { get; set; }
+
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
         [Required(ErrorMessage = "Mail Date is required.")]
         public DateTime? MailDate { get; set; }
-
-        [Required(ErrorMessage = "Customer is required.")]
-        public string Customer { get; set; } = string.Empty;
 
         public string? KitName { get; set; }
         public string? SubAccount { get; set; }
@@ -27,8 +28,8 @@ namespace JobEntryApp.Models
         public string? PostageClass { get; set; }
         public string? Sales { get; set; }
         public string? Commingler { get; set; }
-        public DateTime? StartDate { get; set; }
-        public string Status { get; set; } = "New";
+
+        public string Status { get; set; }
 
         public bool Print { get; set; }
         public bool TwoWayMatch { get; set; }
@@ -59,5 +60,10 @@ namespace JobEntryApp.Models
         public string? MatchComponent5FacingDirection { get; set; }
 
         public bool RushJob { get; set; }
+
+        public JobModel()
+        {
+            Status = "New";
+        }
     }
 }

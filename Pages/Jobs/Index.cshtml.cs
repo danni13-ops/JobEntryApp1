@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Data.SqlClient;
-using System.Data;
+using System.Data; // <-- Correct using directive for Data namespace
+using Microsoft.Data.SqlClient; // <-- Use Microsoft.Data.SqlClient instead of System.Data.SqlClient
 
 namespace JobEntryApp.Pages.Jobs
 {
@@ -30,9 +30,20 @@ namespace JobEntryApp.Pages.Jobs
         [BindProperty]
         public List<int> SelectedJobs { get; set; } = new();
 
+        public string? StatusMessage { get; set; }
+
         public IActionResult OnGet()
         {
-            LoadJobs();
+            try
+            {
+                LoadJobs();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Jobs page could not load because the database is unavailable.");
+                Jobs = new List<JobListItem>();
+                StatusMessage = "The database is unavailable right now, so jobs could not be loaded.";
+            }
 
             if (ExportCsv)
             {

@@ -412,6 +412,9 @@ namespace JobEntryApp.Pages
 
             try
             {
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    throw new PlatformNotSupportedException("Excel COM automation is only supported on Windows.");
+
                 var excelType = Type.GetTypeFromProgID("Excel.Application")
                     ?? throw new InvalidOperationException("Excel COM is not available.");
                 excelApp = Activator.CreateInstance(excelType);
@@ -482,7 +485,8 @@ namespace JobEntryApp.Pages
 
         private static string? ReadCellText(dynamic worksheet, int row, int column)
         {
-            var raw = worksheet.Cells.Item(row, column).Text;
+            var cell = worksheet?.Cells?.Item(row, column);
+            var raw = cell is null ? null : cell.Text;
             var text = raw is null ? null : Convert.ToString(raw, CultureInfo.InvariantCulture);
             return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
         }
@@ -490,6 +494,11 @@ namespace JobEntryApp.Pages
         private static void ReleaseComObject(object? obj)
         {
             if (obj is null)
+            {
+                return;
+            }
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return;
             }

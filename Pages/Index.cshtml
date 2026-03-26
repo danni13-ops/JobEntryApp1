@@ -1,226 +1,110 @@
 @page
-@model JobEntryApp.Pages.IndexModel
-
+@model IndexModel
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Operations Dashboard";
 }
 
-<style>
-    :root{
-        --card-radius: .75rem;
-        --card-padding: 1rem;
-    }
+<div class="container mt-4">
 
-    .module-card {
-        aspect-ratio: 3.3 / 1.75;
-        display: flex;
-        align-items: center;
-        padding: var(--card-padding);
-        border-radius: var(--card-radius);
-        background: var(--card-bg, #fff);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        position: relative;
-        overflow: visible;
-        min-height: 120px;
-        border: 1px solid var(--card-border, rgba(15, 23, 42, 0.05));
-        box-shadow:
-            0 10px 18px rgba(15, 23, 42, 0.06),
-            12px 0 20px var(--side-shadow, rgba(27, 110, 194, 0.09));
-    }
+    <h2 class="mb-4">Operations Dashboard</h2>
 
-    .module-card::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        filter: blur(18px) saturate(120%);
-        opacity: 0.14;
-        border-radius: inherit;
-    }
+    <div class="row g-3">
 
-    .module-card .icon {
-        font-size: 2.5rem;
-        line-height: 1;
-        color: var(--icon-color, #1b6ec2);
-    }
+        <!-- JOB ENTRY -->
+        <div class="col-md-3">
+            <a asp-page="/NewJob" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Job Entry</h5>
+                        <p class="card-text small">Create new job</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .module-card .title {
-        font-size: 1.125rem;
-        font-weight: 700;
-        margin-bottom: .125rem;
-    }
+        <!-- JOB BOOK -->
+        <div class="col-md-3">
+            <a asp-page="/Jobs/Index" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Job Book</h5>
+                        <p class="card-text small">All jobs</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .module-card .subtitle {
-        font-size: .95rem;
-        color: var(--subtitle-color, #495057);
-    }
+        <!-- MAIL CHART -->
+        <div class="col-md-3">
+            <a asp-page="/MailChart/Index" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Mail Chart</h5>
+                        <p class="card-text small">Mail schedule</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .module-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            0 14px 24px rgba(15, 23, 42, 0.1),
-            14px 0 24px var(--side-shadow, rgba(27, 110, 194, 0.14));
-    }
-    .module-card:focus { outline: 3px solid rgba(27,110,194,0.12); transform: translateY(-4px); }
+        <!-- POSTAGE -->
+        <div class="col-md-3">
+            <a asp-page="/Postage/Index" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Postage</h5>
+                        <p class="card-text small">Stamp & permit reports</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .tone-emerald {
-        --icon-color: #1f8a61;
-        --side-shadow: rgba(31, 138, 97, 0.16);
-        --card-bg: linear-gradient(145deg, #e9f8f0, #f8fffb);
-        --card-border: rgba(31, 138, 97, 0.24);
-    }
+        <!-- TASK SCHEDULE -->
+        <div class="col-md-3">
+            <a asp-page="/Tasks" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Task Schedule</h5>
+                        <p class="card-text small">Production timeline</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .tone-ocean {
-        --icon-color: #1f67b5;
-        --side-shadow: rgba(31, 103, 181, 0.16);
-        --card-bg: linear-gradient(145deg, #e7f2ff, #f8fbff);
-        --card-border: rgba(31, 103, 181, 0.24);
-    }
+        <!-- PRODUCTION -->
+        <div class="col-md-3">
+            <a asp-page="/TaskDashboard" class="dashboard-card">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Production</h5>
+                        <p class="card-text small">Production floor</p>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-    .tone-gold {
-        --icon-color: #b57508;
-        --side-shadow: rgba(181, 117, 8, 0.16);
-        --card-bg: linear-gradient(145deg, #fff4df, #fffdf7);
-        --card-border: rgba(181, 117, 8, 0.24);
-    }
-
-    .tone-violet {
-        --icon-color: #7755c5;
-        --side-shadow: rgba(119, 85, 197, 0.16);
-        --card-bg: linear-gradient(145deg, #f1ebff, #fbf9ff);
-        --card-border: rgba(119, 85, 197, 0.24);
-    }
-
-    .tone-cyan {
-        --icon-color: #167f98;
-        --side-shadow: rgba(22, 127, 152, 0.16);
-        --card-bg: linear-gradient(145deg, #e7f7fb, #f8feff);
-        --card-border: rgba(22, 127, 152, 0.24);
-    }
-
-    .tone-slate {
-        --icon-color: #49566b;
-        --side-shadow: rgba(73, 86, 107, 0.16);
-        --card-bg: linear-gradient(145deg, #edf1f7, #fafcff);
-        --card-border: rgba(73, 86, 107, 0.24);
-    }
-
-    .tone-coral {
-        --icon-color: #ba5a4d;
-        --side-shadow: rgba(186, 90, 77, 0.16);
-        --card-bg: linear-gradient(145deg, #fceeea, #fffaf8);
-        --card-border: rgba(186, 90, 77, 0.24);
-    }
-
-    .tone-indigo {
-        --icon-color: #435cc7;
-        --side-shadow: rgba(67, 92, 199, 0.16);
-        --card-bg: linear-gradient(145deg, #eaeeff, #f9faff);
-        --card-border: rgba(67, 92, 199, 0.24);
-    }
-
-    .tone-emerald::after { background: linear-gradient(120deg, #1f8a61, #58c79a); }
-    .tone-ocean::after { background: linear-gradient(120deg, #1f67b5, #6ea8f7); }
-    .tone-gold::after { background: linear-gradient(120deg, #b57508, #f0c35a); }
-    .tone-violet::after { background: linear-gradient(120deg, #7755c5, #b8a0ff); }
-    .tone-cyan::after { background: linear-gradient(120deg, #167f98, #56bfd9); }
-    .tone-slate::after { background: linear-gradient(120deg, #49566b, #8ea1bd); }
-    .tone-coral::after { background: linear-gradient(120deg, #ba5a4d, #f2a591); }
-    .tone-indigo::after { background: linear-gradient(120deg, #435cc7, #8ca0f6); }
-
-    .module-card-disabled {
-        opacity: 0.9;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-
-    .module-card .d-flex { gap: 1rem; }
-    .module-card a, .module-card a:visited { color: inherit; }
-
-    @@media (max-width: 576px) {
-        .module-card { min-height: 110px; }
-        .module-card .icon { font-size: 2rem; }
-        .module-card .title { font-size: 1rem; }
-    }
-</style>
-
-<div class="container-fluid mt-4">
-    <div class="mb-4">
-        <h1 class="h3 mb-0">Job Management System</h1>
-        <div class="text-muted">Select a module to get started</div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-sm-6 col-md-4">
-            <a asp-page="/NewJob" class="card module-card h-100 text-decoration-none text-dark tone-emerald" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-plus-circle icon"></i>
-                    <div>
-                        <div class="title">New Job</div>
-                        <div class="subtitle">Create a new job with all details</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4">
-            <a asp-page="/Jobs/Index" class="card module-card h-100 text-decoration-none text-dark tone-ocean" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-folder2-open icon"></i>
-                    <div>
-                        <div class="title">Job Book</div>
-                        <div class="subtitle">Browse, filter, and open job details</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4">
-            <a asp-page="/Jobs/Search" class="card module-card h-100 text-decoration-none text-dark tone-violet" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-search icon"></i>
-                    <div>
-                        <div class="title">Job Information</div>
-                        <div class="subtitle">Search and jump directly to a job</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4">
-            <a asp-page="/Mailchart/Index" class="card module-card h-100 text-decoration-none text-dark tone-gold" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-envelope-paper icon"></i>
-                    <div>
-                        <div class="title">Mail Chart</div>
-                        <div class="subtitle">Manage mail plan rows by job and kit</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4">
-            <a asp-page="/TaskDashboard" class="card module-card h-100 text-decoration-none text-dark tone-coral" tabindex="0">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-gear-wide-connected icon"></i>
-                    <div>
-                        <div class="title">Production Dashboard</div>
-                        <div class="subtitle">Data processing, production &amp; mailing</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-sm-6 col-md-4">
-            <div class="card module-card module-card-disabled h-100 text-dark tone-indigo" aria-disabled="true">
-                <div class="d-flex align-items-center w-100">
-                    <i class="bi bi-bar-chart-line icon"></i>
-                    <div>
-                        <div class="title">Reports</div>
-                        <div class="subtitle">Coming soon</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+
+<style>
+
+    .dashboard-card {
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .dashboard-card:hover {
+            transform: scale(1.03);
+            transition: 0.2s;
+        }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .card-title {
+        font-weight: 600;
+    }
+
+</style>

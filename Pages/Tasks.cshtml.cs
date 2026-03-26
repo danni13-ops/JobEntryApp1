@@ -32,8 +32,17 @@ public class TasksModel : PageModel
                 return RedirectToPage("/Index");
 
             JobNumber = jobNumber;
-            LoadJobInfo();
-            LoadTasks();
+            try
+            {
+                LoadJobInfo();
+                LoadTasks();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Tasks page could not load because the database is unavailable.");
+                StatusMessage = "The database is unavailable right now, so tasks could not be loaded.";
+                Tasks = new List<TaskItem>();
+            }
 
             return Page();
         }

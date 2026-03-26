@@ -33,7 +33,17 @@ namespace JobEntryApp.Pages.Mailchart
 
         public void OnGet()
         {
-            LoadMailChart();
+            try
+            {
+                LoadMailChart();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Mail chart could not load because the database is unavailable.");
+                StatusMessage = "The database is unavailable right now, so the mail chart could not be loaded.";
+                TodayJobs = new List<MailChartItem>();
+                OtherJobs = new List<MailChartItem>();
+            }
         }
 
         public IActionResult OnPostEditRow()
